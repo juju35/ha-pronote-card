@@ -45,7 +45,7 @@ const PANEL_STYLE = `
   .pane-title .aside { margin-left: auto; font-size: 12px; font-weight: 400; color: var(--secondary-text-color); }
   /* One wide pane per tab: its blocks laid out in columns, the summaries across the whole width. */
   .content.cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-items: start; }
-  .content.cols > :is(.summary, .tiles, .overall, .empty) { grid-column: 1 / -1; }
+  .content.cols > :is(.summary, .tiles, .overall, .empty, .periodbar) { grid-column: 1 / -1; }
   .section-title.static { cursor: default; }
   .page > .backdrop { position: fixed; padding-top: calc(var(--header-height, 56px) + 16px); }
   .page > .backdrop .modal { max-height: calc(100% - var(--header-height, 56px) - 32px); }
@@ -231,7 +231,7 @@ class PronotePanel extends PronoteCard {
     }
     if (e.grades || e.overall_average) {
       const only = { overall_average: e.overall_average, current_period: e.current_period, grades: e.grades };
-      panes.push(this._pane(this._t("grades"), "grades", this._grades({ ...s, entities: only })));
+      panes.push(this._pane(this._t("grades"), "grades", this._grades({ ...s, entities: only, periods: {} })));
     }
     if (e.absences || e.delays || e.punishments || e.information) panes.push(this._pane(this._t("school_life"), "life", this._schoolLife(s, { tilesOnly: true })));
     if (e.menus) panes.push(this._pane(this._t("menus"), "food", this._menu(e.menus)));

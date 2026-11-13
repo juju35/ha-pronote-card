@@ -89,7 +89,7 @@ export const load = ({ now = NOW } = {}) => {
 const exportsOf = (sandbox) =>
   vm.runInContext(
     `({ STRINGS, esc, lang, intlLocale, parseNum, gradeClass, levelClass, roleOf, resolve, findStudents, studentName, keyOf, addDays, dayLabel, lessonState, sceneSvg,
-       PronoteCard: customElements.get("pronote-card"), PronoteMiniCard: customElements.get("pronote-mini-card"),
+       periodOf, PronoteCard: customElements.get("pronote-card"), PronoteMiniCard: customElements.get("pronote-mini-card"),
        PronoteCardEditor: customElements.get("pronote-card-editor"), PronoteMiniCardEditor: customElements.get("pronote-mini-card-editor"),
        PronotePanel: customElements.get("pronote-panel"), window })`,
     sandbox,
