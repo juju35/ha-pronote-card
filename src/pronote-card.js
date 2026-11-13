@@ -488,6 +488,42 @@ const isOutside = (card, ev) => {
   const path = ev.composedPath();
   return !path.includes(card) && !path.some((n) => DIALOG_TAGS.has(n.tagName));
 };
+
+// "A click elsewhere" is caught on the pointer, not only on the click event: on iOS (Safari and the companion app)
+// a tap on something that is not clickable (the background, an empty spot, a card with no action) sends no click to
+// the page. The handler runs when the press and the release are both outside the card (a slider dragged out of the
+// card does not count), and a scroll does not count (the browser cancels the pointer); keyboard clicks still go
+// through the click event. The handler keeps its own checks (outside of the card, not in a dialog).
+const watchOutside = (card, handler) => {
+  let downOutside = false;
+  const onDown = (ev) => {
+    downOutside = !ev.composedPath().includes(card);
+  };
+  const onUp = (ev) => {
+    if (downOutside) handler(ev);
+    downOutside = false;
+  };
+  const onClick = (ev) => {
+    if (ev.detail === 0) handler(ev);
+  };
+  return {
+    on() {
+      document.addEventListener("pointerdown", onDown, true);
+      document.addEventListener("pointerup", onUp, true);
+      document.addEventListener("click", onClick, true);
+    },
+    off() {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("pointerup", onUp, true);
+      document.removeEventListener("click", onClick, true);
+    },
+    // A tap (press and release at the same spot), for the tests.
+    tap(ev) {
+      onDown(ev);
+      onUp(ev);
+    },
+  };
+};
 // After the popup closes, clicks are ignored for this long: the second click of a double click on Close would
 // otherwise land on what lies under it.
 const CLOSE_GUARD_MS = 400;
@@ -637,8 +673,30 @@ class PronoteBase extends HTMLElement {
     this._html = "";
     this._toggled = new Map();
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
+    // No rewrite of the card between the press and the release: Home Assistant updates the card several times a
+    // second, and a rewrite under the pointer replaces the element pressed, so that the click lands on the card
+    // itself and does nothing. The pending render is done once released (after the click).
+    this._onPressStart = () => {
+      this._byPointer = true;
+      this._pressing = true;
+      window.addEventListener("pointerup", this._onPressEnd, true);
+      window.addEventListener("pointercancel", this._onPressEnd, true);
+    };
+    this._onPressEnd = () => {
+      window.removeEventListener("pointerup", this._onPressEnd, true);
+      window.removeEventListener("pointercancel", this._onPressEnd, true);
+      setTimeout(() => {
+        this._pressing = false;
+        if (!this._dirty) return;
+        this._dirty = false;
+        this._update();
+      }, 0);
+    };
+    this.shadowRoot.addEventListener("pointerdown", this._onPressStart);
     // Enter / Space on an element with the button role acts as a click, as on a <button>.
     this.shadowRoot.addEventListener("keydown", (ev) => {
+      // The focus is kept across rewrites for the keyboard only (no focus ring after a mouse click or a tap).
+      this._byPointer = false;
       if ((ev.key !== "Enter" && ev.key !== " ") || ev.target?.getAttribute?.("role") !== "button") return;
       ev.preventDefault();
       ev.target.click();
@@ -683,8 +741,11 @@ class PronoteBase extends HTMLElement {
       if (this._popup) this._closePopup();
       else this._update();
     };
-    document.addEventListener("click", this._onOutside, true);
+    this._outside ??= watchOutside(this, (ev) => this._onOutside(ev));
+    this._outside.on();
     if (this._popup) window.addEventListener("keydown", this._onKey);
+    // Back on the page after leaving it: rendered again in its default state.
+    this._update();
     clearInterval(this._tick);
     this._tick = setInterval(() => {
       if (this._hass) this.hass = this._hass;
@@ -694,8 +755,15 @@ class PronoteBase extends HTMLElement {
   disconnectedCallback() {
     clearInterval(this._tick);
     this._tick = null;
-    document.removeEventListener("click", this._onOutside, true);
+    this._outside?.off();
     window.removeEventListener("keydown", this._onKey);
+    this._pressing = false;
+    window.removeEventListener("pointerup", this._onPressEnd, true);
+    window.removeEventListener("pointercancel", this._onPressEnd, true);
+    // Left (another dashboard view, a conditional card hidden): back to the defaults, so that the card does not come
+    // back unfolded or with its popup open.
+    this._toggled = new Map();
+    this._popup = null;
   }
 
   setConfig(config) {
@@ -722,6 +790,11 @@ class PronoteBase extends HTMLElement {
 
   _update() {
     if (!this._hass || !this._config) return;
+    // A press in progress: drawn once released (see _onPressStart).
+    if (this._pressing) {
+      this._dirty = true;
+      return;
+    }
     this.toggleAttribute?.("dark", !!this._hass.themes?.darkMode);
     let html = this._render();
     if (this._popup) {
@@ -730,7 +803,7 @@ class PronoteBase extends HTMLElement {
       else this._popup = null;
     }
     if (html === this._html) return;
-    const kept = this._popup ? null : this._focusedSpot();
+    const kept = this._popup || this._byPointer ? null : this._focusedSpot();
     this._html = html;
     this.shadowRoot.innerHTML = html;
     if (kept) this._restoreFocus(kept);
@@ -756,6 +829,9 @@ class PronoteBase extends HTMLElement {
   }
 
   _onClick(ev) {
+    // The click ends the press: what it changes is drawn at once.
+    this._pressing = false;
+    if (ev.detail === 0) this._byPointer = false;
     const path = ev.composedPath();
     const el = path.find((n) => n.dataset && (n.dataset.entity || n.dataset.action));
     if (!this._popup && now() - (this._popupClosedAt ?? 0) < CLOSE_GUARD_MS) {
@@ -1380,13 +1456,16 @@ class PronoteMiniCard extends PronoteCard {
   }
 
   connectedCallback() {
+    this._unzoom ??= watchOutside(this, this._onUnzoom);
+    this._unzoom.on();
     super.connectedCallback();
-    document.addEventListener("click", this._onUnzoom, true);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    document.removeEventListener("click", this._onUnzoom, true);
+    this._unzoom?.off();
+    // Back to the compact view once off the screen.
+    this._zoomed = false;
   }
 
   getCardSize() {
