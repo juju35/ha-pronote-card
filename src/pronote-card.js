@@ -1266,7 +1266,8 @@ class PronoteCard extends PronoteBase {
     return parts.join("") || `<div class="empty">${esc(this._t("no_grades"))}</div>`;
   }
 
-  _schoolLife(s) {
+  // `tilesOnly`: the counters alone (the panel's Today tab).
+  _schoolLife(s, { tilesOnly = false } = {}) {
     const e = s.entities;
     const locale = this._locale();
     const absences = list(this._s(e.absences), "absences");
@@ -1287,6 +1288,7 @@ class PronoteCard extends PronoteBase {
         tile(e.information, "info", this._t("information"), unread, unread ? "active" : ""),
       ].join("")}</div>`,
     ];
+    if (tilesOnly) return parts[0];
     const justified = (j) => this._tag(j ? "ok" : "warn", this._t(j ? "justified" : "unjustified"));
     const empty = `<div class="empty">${esc(this._t("nothing"))}</div>`;
     const rows = (items, fn) => (items.length ? `<div class="rows">${items.map(fn).join("")}</div>` : empty);
