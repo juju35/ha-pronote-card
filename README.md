@@ -28,7 +28,7 @@ The cards work on top of the community [Pronote integration](https://github.com/
 - Animated picture of the school, following the day: lesson going on, lesson canceled, homework to do, homework done (see [Animations](#animations)); beside it the lesson going on or the next one, the canceled and changed lessons still to come and the homework for the next school day
 - **Timetable** tab: today and the next school day, the lesson going on with a pulsing dot and its progress, past lessons dimmed, **canceled lessons struck through in red**, **changed lessons in orange** with Pronote's own status ("Teacher absent", "Room changed"…), tests, outings and detentions tagged, the lunch break between the morning and the afternoon, rooms and teachers
 - **Homework** tab: grouped by due day, a check circle for the homework done and an empty one for the homework to do, the subject in its Pronote color; a click opens the full text and the attachments in a popup at the top of the card
-- **Grades** tab: overall average of the period, latest grades on their own scale (out of 20, 10…) with the class average, averages per subject with a bar and the class marker, evaluations with their acquisition levels
+- **Grades** tab: overall average of the period, latest grades on their own scale (out of 20, 10…) with their coefficient, the class average and the class min and max, averages per subject with a bar, the class marker and the class min and max, evaluations with their acquisition levels; **period buttons** to look back at a past term or semester (its overall average, grades and averages)
 - **School life** tab: counters (absences, late arrivals, punishments, unread information), absences and late arrivals justified or not, punishments, today's menu, the school's information with the unread ones marked
 - Collapsible sections (chevron to the right when folded, down when unfolded), folded back by a click elsewhere on the page
 - Mini card: next lesson, the changes of the day still to come and the homework for the next school day; the detail button (top right) switches it to the full card's content and back, a click anywhere outside the card brings the compact view back
@@ -43,7 +43,7 @@ The cards work on top of the community [Pronote integration](https://github.com/
 |---|---|
 | [Pronote](https://github.com/delphiki/hass-pronote) (custom, `pronote`) — and its forks keeping the `pronote` domain | Everything: class and school, today's / tomorrow's / next day's timetable, homework, grades, averages, overall average and period, evaluations, absences, late arrivals, punishments, menus, information and surveys |
 
-The cards read the sensors of the current period (`lessons_today`, `lessons_tomorrow`, `lessons_next_day`, `homework`, `grades`, `averages`, `overall_average`, `evaluations`, `absences`, `delays`, `punishments`, `menus`, `information_and_surveys`, `class`, `current_period`); the sensors of past periods are left out. Versions of the integration older than its translated entity names are recognized from their entity ids (`sensor.pronote_<student>_timetable_today`…). A sensor the integration does not create (menus at a school without a canteen, evaluations…) simply hides its part of the card.
+The cards read the sensors of the current period (`lessons_today`, `lessons_tomorrow`, `lessons_next_day`, `homework`, `grades`, `averages`, `overall_average`, `evaluations`, `absences`, `delays`, `punishments`, `menus`, `information_and_surveys`, `class`, `current_period`, `periods`). The Grades tab also reads the sensors the integration creates for the past terms or semesters (`grades_period`, `averages_period`, `overall_average_period`, `evaluations_period`, e.g. `sensor.pronote_<student>_averages_trimestre_1`): one button per past period, then the current one. The integration creates them only for the periods before the current one (none during the first term), and only when the school's periods are terms or semesters. The class min and max (`min`, `max`) and the coefficient (`coefficient`) are the attributes the integration gives on each grade and average (no coefficient per subject average: Pronote's averages do not carry one). Versions of the integration older than its translated entity names are recognized from their entity ids (`sensor.pronote_<student>_timetable_today`…). A sensor the integration does not create (menus at a school without a canteen, evaluations…) simply hides its part of the card.
 
 > [!NOTE]
 > Pronote gives no way to tick a homework from Home Assistant: the cards show it as done or to do as Pronote reports it (ticked in the Pronote app).
@@ -122,6 +122,9 @@ show_teacher: true
 show_canceled: true
 show_done_homework: true
 show_class_average: true
+show_min_max: true
+show_coefficient: true
+show_periods: true
 max_grades: 5
 collapsed:
   - evaluations
@@ -156,6 +159,9 @@ language: fr
 | `default_tab` | full | `timetable` | Tab shown when the card opens |
 | `show_done_homework` | full | `true` | Show the homework already done (checked) in the Homework tab |
 | `show_class_average` | full | `true` | Show the class average of each grade and the class marker on the averages |
+| `show_min_max` | full | `true` | Show the class min and max of each grade and of each subject average (when the integration gives them) |
+| `show_coefficient` | full | `true` | Show the coefficient of each grade, beside its date |
+| `show_periods` | full | `true` | Show the period buttons of the Grades tab (only when the integration has sensors for past periods) |
 | `max_grades` | full | `5` | Number of latest grades shown (the integration keeps 11) |
 | `collapsed` | full | `[evaluations, information]` | Sections folded by default, among `grades`, `averages`, `evaluations`, `absences`, `delays`, `punishments`, `menus` and `information` (`[]` to unfold everything). Click a section title (or Tab to it and press Enter or Space) to fold or unfold it; a click elsewhere on the page folds them back |
 | `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `tabs`, `collapsed`… can be set on the mini card too) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
@@ -181,7 +187,7 @@ panel_custom:
       max_grades: 10        # 10 by default on the panel
 ```
 
-`config` takes the options of the full card (`device`, `devices`, `title`, `show_room`, `show_teacher`, `show_canceled`, `show_done_homework`, `show_class_average`, `show_picture`, `max_grades`, `language`), plus `default_tab`, which can also be `today`. Sections are always unfolded on the panel.
+`config` takes the options of the full card (`device`, `devices`, `title`, `show_room`, `show_teacher`, `show_canceled`, `show_done_homework`, `show_class_average`, `show_min_max`, `show_coefficient`, `show_periods`, `show_picture`, `max_grades`, `language`), plus `default_tab`, which can also be `today`. Sections are always unfolded on the panel.
 
 | Today | Grades (dark theme) |
 |---|---|
@@ -211,11 +217,17 @@ Grouped by due day, done or to do; a click opens the full text and the attachmen
 
 ### Grades
 
-Overall average of the period, latest grades on their own scale with the class average (green from 14/20, blue from 10, orange from 8, red below), averages per subject with the class marker, evaluations with their acquisition levels:
+Overall average of the period, latest grades on their own scale with their coefficient, the class average and the class min and max (green from 14/20, blue from 10, orange from 8, red below), averages per subject with the class marker and the class min and max, evaluations with their acquisition levels:
 
 | Light | Dark |
 |---|---|
 | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/card-grades.png" alt="grades" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/card-grades-dark.png" alt="grades dark" width="400"> |
+
+A past period picked with the period buttons, to compare its averages with the current period's:
+
+| Light | Dark |
+|---|---|
+| <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/card-grades-period.png" alt="grades of a past period" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/card-grades-period-dark.png" alt="grades of a past period dark" width="400"> |
 
 ### School life
 

@@ -69,7 +69,7 @@ const homework = (date, subject, description, done, files = []) => ({
   files,
 });
 
-const grade = (date, subject, value, outOf, avg, comment = "") => ({
+const grade = (date, subject, value, outOf, avg, comment = "", { coefficient = "1", min = "6", max = "19" } = {}) => ({
   date,
   subject,
   comment,
@@ -77,16 +77,16 @@ const grade = (date, subject, value, outOf, avg, comment = "") => ({
   out_of: outOf,
   default_out_of: "20",
   grade_out_of: `${value}/${outOf}`,
-  coefficient: "1",
+  coefficient,
   class_average: avg,
-  max: "19",
-  min: "6",
+  max,
+  min,
   is_bonus: false,
   is_optionnal: false,
   is_out_of_20: outOf === "20",
 });
 
-const average = (subject, value, cls) => ({ average: value, class: cls, max: "18,5", min: "7", out_of: "20", default_out_of: "20", subject, background_color: COLORS[subject] });
+const average = (subject, value, cls, min = "7", max = "18,5") => ({ average: value, class: cls, max, min, out_of: "20", default_out_of: "20", subject, background_color: COLORS[subject] });
 
 const common = (name) => ({ full_name: name, nickname: null, via_parent_account: true, updated_at: "2026-11-17T10:05:00+01:00" });
 
@@ -122,27 +122,54 @@ const alexHomework = [
 a("homework", alexHomework.length, { homework: alexHomework, todo_counter: alexHomework.filter((h) => !h.done).length });
 a("grades", 6, {
   grades: [
-    grade("2026-11-14", "Mathematics", "16", "20", "12,4", "Fractions"),
-    grade("2026-11-13", "English", "14,5", "20", "13,1", "Oral presentation"),
-    grade("2026-11-12", "History-Geography", "11", "20", "11,8", "Map test"),
-    grade("2026-11-10", "Physics-Chemistry", "7", "10", "6,2"),
-    grade("2026-11-07", "French", "9", "20", "10,6", "Dictation"),
+    grade("2026-11-14", "Mathematics", "16", "20", "12,4", "Fractions", { coefficient: "2", min: "4,5", max: "19,5" }),
+    grade("2026-11-13", "English", "14,5", "20", "13,1", "Oral presentation", { min: "8", max: "18" }),
+    grade("2026-11-12", "History-Geography", "11", "20", "11,8", "Map test", { coefficient: "0,5", min: "5", max: "17" }),
+    grade("2026-11-10", "Physics-Chemistry", "7", "10", "6,2", "", { min: "2,5", max: "9,5" }),
+    grade("2026-11-07", "French", "9", "20", "10,6", "Dictation", { min: "3", max: "17,5" }),
     grade("2026-11-05", "Technology", "Abs", "20", "12"),
   ],
 });
 a("averages", 7, {
   averages: [
-    average("English", "14,20", "12,90"),
-    average("French", "11,40", "11,10"),
-    average("History-Geography", "12,75", "12,00"),
-    average("Mathematics", "15,60", "11,80"),
-    average("Physical Education", "16,00", "14,30"),
-    average("Physics-Chemistry", "13,50", "12,20"),
-    average("Technology", "9,20", "12,60"),
+    average("English", "14,20", "12,90", "8,50", "17,80"),
+    average("French", "11,40", "11,10", "6,20", "16,40"),
+    average("History-Geography", "12,75", "12,00", "7,30", "17,10"),
+    average("Mathematics", "15,60", "11,80", "5,40", "18,90"),
+    average("Physical Education", "16,00", "14,30", "10,00", "18,00"),
+    average("Physics-Chemistry", "13,50", "12,20", "6,80", "17,60"),
+    average("Technology", "9,20", "12,60", "8,10", "17,00"),
   ],
 });
-a("overall_average", "13,52");
-a("current_period", "Term 1", { id: "term_1", name: "Term 1", start: "2026-09-01T00:00:00", end: "2026-11-28T00:00:00", is_current_period: true });
+a("overall_average", "13,52", { period_key: "term_2", is_current_period: true });
+const TERMS = [
+  { id: "term_1", name: "Term 1", start: "2026-09-01T00:00:00", end: "2026-10-31T00:00:00" },
+  { id: "term_2", name: "Term 2", start: "2026-11-02T00:00:00", end: "2027-02-26T00:00:00" },
+  { id: "term_3", name: "Term 3", start: "2027-03-01T00:00:00", end: "2027-07-03T00:00:00" },
+];
+a("current_period", "Term 2", { ...TERMS[1], is_current_period: true });
+a("periods", 3, { periods: TERMS.map((p) => ({ ...p, is_current_period: p.id === "term_2" })) });
+// The past period (Term 1): the integration's `<key>_<period>` sensors, with their `<key>_period` translation keys.
+const past = (key, state, attrs = {}) =>
+  entity(`sensor.pronote_alex_moreau_${key}_term_1`, A, `${key}_period`, state, { ...common("Alex Moreau"), period_key: "term_1", is_current_period: false, ...attrs });
+past("overall_average", "12,96");
+past("grades", 2, {
+  grades: [
+    grade("2026-10-16", "Mathematics", "13", "20", "11,2", "Proportionality", { coefficient: "2", min: "3", max: "18" }),
+    grade("2026-10-09", "French", "12", "20", "11,5", "Essay", { min: "5,5", max: "17" }),
+  ],
+});
+past("averages", 7, {
+  averages: [
+    average("English", "13,40", "12,50", "7,90", "17,20"),
+    average("French", "12,10", "11,30", "5,80", "16,90"),
+    average("History-Geography", "11,90", "11,70", "6,50", "16,80"),
+    average("Mathematics", "14,20", "11,40", "4,60", "18,40"),
+    average("Physical Education", "15,50", "14,10", "9,50", "18,50"),
+    average("Physics-Chemistry", "12,80", "12,00", "6,10", "17,30"),
+    average("Technology", "10,60", "12,40", "7,80", "16,70"),
+  ],
+});
 a("evaluations", 3, {
   evaluations: [
     {

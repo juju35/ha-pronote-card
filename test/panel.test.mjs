@@ -33,12 +33,14 @@ test("the Today tab shows the student, the next lesson, the homework, the grades
   assert.match(out, /Latest grades/);
   assert.match(out, /class="tiles"/);
   assert.doesNotMatch(out, /data-action="toggle_section"/, "sections do not fold on the panel");
+  assert.doesNotMatch(out, /class="daybar periodbar"/, "the period buttons are on the Grades tab only");
 });
 
 test("the tab comes from the address and goes back to it", () => {
   const p = open({}, "/grades");
   assert.match(html(p), /data-tab="grades" aria-selected="true"/);
   assert.match(html(p), /Averages/);
+  assert.match(html(p), /class="daybar periodbar"/);
   click(p, { action: "tab", tab: "school_life" });
   assert.match(html(p), /data-tab="school_life" aria-selected="true"/);
   assert.match(html(p), /class="content cols"/);

@@ -134,6 +134,81 @@ test("grades: overall average, latest grades out of their scale, averages with t
   assert.match(out, /chip warn"[^>]*>B</);
 });
 
+test("grades: the class min and max of each grade and average, the coefficient of each grade (#7)", () => {
+  const out = html(render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "grades", collapsed: [] }));
+  assert.match(out, /Nov 14 · Coef\. 2 · Fractions/);
+  assert.match(out, /Coef\. 0\.5 · Map test/);
+  assert.match(out, /<small class="mm">Min 4\.5 · Max 19\.5<\/small>/);
+  assert.match(out, /<div class="mm">Min 5\.4 · Max 18\.9<\/div>/, "Mathematics average");
+  const hidden = html(render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "grades", collapsed: [], show_min_max: false, show_coefficient: false }));
+  assert.doesNotMatch(hidden, /class="mm"|Min \d/);
+  assert.doesNotMatch(hidden, /Coef\./);
+  assert.match(hidden, /Nov 14 · Fractions/);
+  const fr = html(render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "grades", collapsed: [], language: "fr" }));
+  assert.match(fr, /Coef\. 0,5/);
+  assert.match(fr, /Min 4,5 · Max 19,5/);
+});
+
+test("a min, max or coefficient the integration does not give is left out", () => {
+  const id = "sensor.pronote_alex_moreau_grades";
+  const g = states[id].attributes.grades[0];
+  const out = html(
+    render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "grades", collapsed: [] }, makeHass({ [id]: { ...states[id], attributes: { grades: [{ ...g, min: "None", max: "None", coefficient: undefined }] } } })),
+  );
+  assert.doesNotMatch(out, /<small class="mm">/);
+  assert.doesNotMatch(out, /Coef\. 2/);
+});
+
+test("past periods: their sensors are found, by translation_key or entity id (#7)", () => {
+  const [alex, sam] = pc.resolve(makeHass());
+  assert.deepEqual(plain(alex.periods), {
+    term_1: {
+      overall_average: "sensor.pronote_alex_moreau_overall_average_term_1",
+      grades: "sensor.pronote_alex_moreau_grades_term_1",
+      averages: "sensor.pronote_alex_moreau_averages_term_1",
+    },
+  });
+  assert.equal(alex.entities.averages, "sensor.pronote_alex_moreau_averages", "the current period stays the default");
+  assert.equal(alex.entities.periods, "sensor.pronote_alex_moreau_periods");
+  assert.deepEqual(plain(sam.periods), {});
+  const period = (entity_id, translation_key = null, attributes) => {
+    const found = pc.periodOf({ entity_id, translation_key }, attributes && { attributes });
+    return found && plain(found);
+  };
+  assert.deepEqual(period("sensor.pronote_x_averages_trimestre_1", "averages_period"), { role: "averages", key: "trimestre_1" });
+  assert.deepEqual(period("sensor.renamed", "overall_average_period", { period_key: "semestre_1" }), { role: "overall_average", key: "semestre_1" });
+  assert.deepEqual(period("sensor.pronote_x_overall_average_trimestre_2"), { role: "overall_average", key: "trimestre_2" });
+  assert.deepEqual(period("sensor.pronote_x_grades_semestre_1"), { role: "grades", key: "semestre_1" });
+  assert.equal(period("sensor.pronote_x_absences_trimestre_1"), undefined, "only the grades tab follows the period");
+  assert.equal(period("sensor.pronote_x_averages", "averages"), undefined);
+  assert.equal(pc.roleOf({ entity_id: "sensor.pronote_x_periods" }), "periods");
+  assert.equal(pc.roleOf({ entity_id: "sensor.pronote_x_previous_periods" }), undefined);
+});
+
+test("period buttons switch the grades tab to a past period and back; show_periods: false removes them (#7)", () => {
+  const card = render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "grades", collapsed: [] });
+  let out = html(card);
+  assert.match(out, /class="daybar periodbar" role="group" aria-label="Period"/);
+  assert.match(out, /data-period="term_1" aria-pressed="false">Term 1<\/button><button class="btn" data-action="period" data-period="" aria-pressed="true">Term 2</);
+  assert.match(out, /13\.52<small>\/20/);
+  click(card, { action: "period", period: "term_1" });
+  out = html(card);
+  assert.match(out, /data-period="term_1" aria-pressed="true"/);
+  assert.match(out, /data-period="" aria-pressed="false">Term 2</, "the current period keeps its name");
+  assert.match(out, /12\.96<small>\/20[\s\S]*?<span>Term 1<\/span>/);
+  assert.match(out, /Proportionality/);
+  assert.doesNotMatch(out, /Fractions/);
+  assert.match(out, /data-entity="sensor\.pronote_alex_moreau_averages_term_1"/);
+  assert.match(out, /Min 4\.6 · Max 18\.4/);
+  assert.doesNotMatch(out, /Evaluations/, "no evaluations sensor for that period: not the current period's");
+  click(card, { action: "period", period: "" });
+  assert.match(html(card), /Fractions/);
+  const off = html(render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "grades", show_periods: false }));
+  assert.doesNotMatch(off, /class="daybar periodbar"/);
+  const sam = html(render(pc.PronoteCard, { device: "Sam Moreau", default_tab: "grades" }));
+  assert.doesNotMatch(sam, /class="daybar periodbar"/, "no past period");
+});
+
 test("a grade that is not a number (absent) is shown as given", () => {
   const out = html(render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "grades", collapsed: [], max_grades: 11 }));
   assert.match(out, /grade idle">Abs<small>\/20/);

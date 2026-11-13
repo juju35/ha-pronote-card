@@ -53,8 +53,8 @@ const SECTIONS = ["grades", "averages", "evaluations", "absences", "delays", "pu
 const DEFAULT_COLLAPSED = ["evaluations", "information"];
 const DEFAULT_MAX_GRADES = 5;
 
-// Entity role per translation_key of the Pronote integration (sensor.py). Period variants (`grades_period`…) are
-// left out: the cards show the current period.
+// Entity role per translation_key of the Pronote integration (sensor.py). The period variants (`grades_period`…)
+// are the past periods of the grades tab (see PERIOD_ROLES).
 const ROLES = {
   class: "class",
   lessons_today: "lessons_today",
@@ -71,7 +71,15 @@ const ROLES = {
   menus: "menus",
   information_and_surveys: "information",
   current_period: "current_period",
+  periods: "periods",
 };
+
+// Past periods (the integration creates them for the terms and semesters before the current one): the role of their
+// sensors per translation_key, and in the entity id for the versions without translation keys
+// (`sensor.pronote_<student>_averages_trimestre_1`).
+const PERIOD_ROLES = { grades_period: "grades", averages_period: "averages", overall_average_period: "overall_average", evaluations_period: "evaluations" };
+const PERIOD_ID_RE = { grades: /_grades_(\w+)$/, averages: /_averages_(\w+)$/, overall_average: /_overall_average_(\w+)$/, evaluations: /_evaluations_(\w+)$/ };
+const LEGACY_PERIOD_RE = /_(grades|averages|overall_average|evaluations)_((?:trimestre|semestre)_\w+)$/;
 
 // Versions of the integration older than its translation keys: the role comes from the end of the entity id
 // (English names, `sensor.pronote_<student>_timetable_today` or `…_today_s_timetable`).
@@ -91,6 +99,7 @@ const LEGACY = [
   ["information", /_information_and_surveys$/],
   ["class", /_class$/],
   ["current_period", /_current_period$/],
+  ["periods", /_periods$/, /_(?:previous|active)_periods$/],
 ];
 
 const roleOf = (e) => {
@@ -99,6 +108,22 @@ const roleOf = (e) => {
   if (!id.startsWith("sensor.")) return undefined;
   for (const [role, re, not] of LEGACY) if (re.test(id) && !not?.test(id)) return role;
   return undefined;
+};
+
+// The past period of a sensor and its role there ({ role, key }), else undefined. The key is the integration's
+// `period_key` attribute, else the end of the entity id.
+const periodOf = (e, state) => {
+  const id = String(e.entity_id || "");
+  let role = e.translation_key ? PERIOD_ROLES[e.translation_key] : undefined;
+  let key = state?.attributes?.period_key;
+  if (role) key ||= id.match(PERIOD_ID_RE[role])?.[1];
+  else if (!e.translation_key) {
+    const m = id.match(LEGACY_PERIOD_RE);
+    if (!m) return undefined;
+    role = m[1];
+    key ||= m[2];
+  }
+  return role && key ? { role, key: String(key) } : undefined;
 };
 
 const esc = (v) =>
@@ -213,16 +238,19 @@ const resolve = (hass) => {
   const byDevice = new Map();
   for (const e of Object.values(ents)) {
     if (e.platform !== PLATFORM || !e.device_id) continue;
+    const state = hass.states?.[e.entity_id];
     // Integration 1.x: the student's own sensor (`sensor.pronote_<student>`) carries the class and the school.
-    const role = roleOf(e) ?? (hass.states?.[e.entity_id]?.attributes?.class_name !== undefined ? "class" : undefined);
-    if (!role) continue;
+    const role = roleOf(e) ?? (state?.attributes?.class_name !== undefined ? "class" : undefined);
+    const period = role ? undefined : periodOf(e, state);
+    if (!role && !period) continue;
     let s = byDevice.get(e.device_id);
     if (!s) {
       const d = hass.devices?.[e.device_id] || {};
-      s = { id: e.device_id, deviceName: d.name_by_user || d.name || "", entities: {} };
+      s = { id: e.device_id, deviceName: d.name_by_user || d.name || "", entities: {}, periods: {} };
       byDevice.set(e.device_id, s);
     }
-    s.entities[role] ??= e.entity_id;
+    if (role) s.entities[role] ??= e.entity_id;
+    else (s.periods[period.key] ??= {})[period.role] ??= e.entity_id;
   }
   const students = [...byDevice.values()].sort((a, b) => a.deviceName.localeCompare(b.deviceName));
   _cache.set(ents, { devices: hass.devices, students });
@@ -436,6 +464,10 @@ const FULL_STYLE = `
   .avg .track > .fill { height: 100%; border-radius: 3px; background: var(--c, var(--pc-ok)); }
   .avg .track > .class { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; border-radius: 1px; background: var(--primary-text-color); opacity: .55; }
   .avg .v { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+  /* Class min and max of a subject, under its name. */
+  .avg .mm { grid-column: 1 / -1; margin-top: -4px; padding-left: 14px; font-size: 11px; color: var(--secondary-text-color); font-variant-numeric: tabular-nums;
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .end small.mm { font-variant-numeric: tabular-nums; }
   .legend { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--secondary-text-color); margin-top: 2px; }
   .legend i { width: 2px; height: 10px; background: var(--primary-text-color); opacity: .55; border-radius: 1px; }
   .acq { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; }
@@ -729,7 +761,7 @@ class PronoteBase extends HTMLElement {
     if (!h || !this._config) return null;
     const { students } = findStudents(h, this._config);
     if (!students) return null;
-    const ids = students.flatMap((s) => Object.values(s.entities));
+    const ids = students.flatMap((s) => [...Object.values(s.entities), ...Object.values(s.periods || {}).flatMap((p) => Object.values(p))]);
     return [h.entities, h.devices, h.language, h.locale, h.themes?.darkMode, Math.floor(now() / 60000), ...ids.map((id) => h.states[id])];
   }
 
@@ -861,6 +893,9 @@ class PronoteBase extends HTMLElement {
         return this._update();
       case "day":
         this._day = d.day;
+        return this._update();
+      case "period":
+        this._period = d.period;
         return this._update();
       case "toggle_section":
         this._toggled = new Map(this._toggled).set(d.section, !this._isCollapsed(d.section));
@@ -1264,20 +1299,50 @@ class PronoteCard extends PronoteBase {
     return `${summary}${html}`;
   }
 
+  // The past periods of the student (oldest first), with their name: from the integration's "Periods" sensor, else
+  // from the key ("trimestre_1" → "Trimestre 1").
+  _pastPeriods(s) {
+    const keys = Object.keys(s.periods || {});
+    if (!keys.length) return [];
+    const known = list(this._s(s.entities.periods), "periods").filter((p) => p && typeof p === "object");
+    const named = (key) => known.find((p) => p.id === key);
+    const rank = (key) => {
+      const p = named(key);
+      return p ? `0${p.start || ""}${String(known.indexOf(p)).padStart(3, "0")}` : `1${key}`;
+    };
+    return keys
+      .sort((a, b) => rank(a).localeCompare(rank(b), undefined, { numeric: true }))
+      .map((key) => ({ key, name: named(key)?.name || upperFirst(key.replace(/_/g, " ")) }));
+  }
+
+  // Period buttons above the grades: the past periods, then the current one ("" for it).
+  _periodBar(past, current, chosen) {
+    const btn = (key, label) => `<button class="btn" data-action="period" data-period="${esc(key)}" aria-pressed="${chosen === key}">${esc(label)}</button>`;
+    return `<div class="daybar periodbar" role="group" aria-label="${esc(this._t("period"))}">${past.map((p) => btn(p.key, p.name)).join("")}${btn("", current)}</div>`;
+  }
+
   _grades(s) {
-    const e = s.entities;
     const locale = this._locale();
     const c = this._config;
     const parts = [];
+    // The period shown: the current one, or a past one picked with the period buttons (show_periods).
+    const past = c.show_periods !== false ? this._pastPeriods(s) : [];
+    const chosen = past.find((p) => p.key === this._period);
+    const period = this._s(s.entities.current_period);
+    const e = chosen ? { ...s.periods[chosen.key] } : s.entities;
+    const currentName = valid(period) ? period.state : "";
+    const periodName = chosen ? chosen.name : currentName;
+    if (past.length) parts.push(this._periodBar(past, currentName || this._t("current_period"), chosen ? chosen.key : ""));
     const overall = this._s(e.overall_average);
-    const period = this._s(e.current_period);
     const ov = valid(overall) ? parseNum(overall.state) : null;
     if (ov !== null) {
       parts.push(`<div class="overall ${gradeClass(ov)} clickable" role="button" tabindex="0" data-entity="${esc(e.overall_average)}">
           <div class="big">${esc(fmtNum(ov, locale))}<small>/20</small></div>
-          <div class="what"><b>${esc(this._t("overall_average"))}</b>${valid(period) ? `<span>${esc(period.state)}</span>` : ""}</div>
+          <div class="what"><b>${esc(this._t("overall_average"))}</b>${periodName ? `<span>${esc(periodName)}</span>` : ""}</div>
         </div>`);
     }
+    const minMax = (lo, hi) =>
+      c.show_min_max !== false && (lo !== null || hi !== null) ? this._t("class_min_max", { min: fmtNum(lo, locale), max: fmtNum(hi, locale) }) : "";
     if (e.grades) {
       const max = Number.isFinite(Number(c.max_grades)) && Number(c.max_grades) > 0 ? Number(c.max_grades) : DEFAULT_MAX_GRADES;
       const grades = list(this._s(e.grades), "grades").slice(0, max);
@@ -1287,13 +1352,15 @@ class PronoteCard extends PronoteBase {
               const v = parseNum(g.grade);
               const out = parseNum(g.out_of) ?? 20;
               const avg = parseNum(g.class_average);
+              const coef = c.show_coefficient !== false ? parseNum(g.coefficient) : null;
+              const mm = minMax(parseNum(g.min), parseNum(g.max));
               const k = keyOf(g.date);
-              const t2 = [k ? shortDay(k, locale) : "", g.comment].filter(Boolean).join(" · ");
+              const t2 = [k ? shortDay(k, locale) : "", coef !== null ? this._t("coef", { v: fmtNum(coef, locale) }) : "", g.comment].filter(Boolean).join(" · ");
               return `<div class="row clickable" role="button" tabindex="0" data-entity="${esc(e.grades)}">
                   <div class="main"><div class="t1"><span>${esc(g.subject || "—")}</span></div>${t2 ? `<div class="t2">${esc(t2)}</div>` : ""}</div>
                   <div class="end"><span class="grade ${gradeClass(v, out)}">${esc(v === null ? g.grade : fmtNum(v, locale))}<small>/${esc(fmtNum(out, locale))}</small></span>${
                     c.show_class_average !== false && avg !== null ? `<small>${esc(this._t("class_avg", { v: fmtNum(avg, locale) }))}</small>` : ""
-                  }</div>
+                  }${mm ? `<small class="mm">${esc(mm)}</small>` : ""}</div>
                 </div>`;
             })
             .join("")}</div>`
@@ -1308,13 +1375,14 @@ class PronoteCard extends PronoteBase {
               const v = parseNum(a.average);
               const out = parseNum(a.out_of) ?? 20;
               const cl = parseNum(a.class);
+              const mm = minMax(parseNum(a.min), parseNum(a.max));
               const pct = (x) => Math.max(0, Math.min(100, Math.round((x / out) * 100)));
               return `<div class="avg clickable ${gradeClass(v, out)}" role="button" tabindex="0" data-entity="${esc(e.averages)}" style="--sc:${colorOf(a.background_color)}">
                   <div class="s"><span class="sdot row-dot" style="width:8px;height:8px;border-radius:50%;background:var(--sc);flex:none"></span><span>${esc(a.subject || "—")}</span></div>
                   <div class="track">${v !== null ? `<div class="fill" style="width:${pct(v)}%"></div>` : ""}${
                     c.show_class_average !== false && cl !== null ? `<div class="class" style="left:${pct(cl)}%" title="${esc(this._t("class_avg", { v: fmtNum(cl, locale) }))}"></div>` : ""
                   }</div>
-                  <div class="v">${esc(v === null ? a.average || "—" : fmtNum(v, locale))}</div>
+                  <div class="v">${esc(v === null ? a.average || "—" : fmtNum(v, locale))}</div>${mm ? `<div class="mm">${esc(mm)}</div>` : ""}
                 </div>`;
             })
             .join("")}</div>${c.show_class_average !== false ? `<div class="legend"><i></i><span>${esc(this._t("class_average"))}</span></div>` : ""}`
@@ -1634,6 +1702,9 @@ class PronoteCardEditor extends PronoteEditorBase {
       ["show_canceled", true],
       ["show_done_homework", true],
       ["show_class_average", true],
+      ["show_min_max", true],
+      ["show_coefficient", true],
+      ["show_periods", true],
     ];
   }
 

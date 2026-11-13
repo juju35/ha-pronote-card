@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0 - 2026-11-13
+
+### Features
+- **Class min and max** on the Grades tab: under each grade (beside the class average) and under each subject average, as the Pronote integration gives them; `show_min_max: false` hides them (#7, suggested by @mielikki33).
+- **Coefficient of each grade**, beside its date; `show_coefficient: false` hides it (#7, suggested by @mielikki33).
+- **Period buttons** on the Grades tab: one per past term or semester, then the current period, to compare the overall average, the grades and the averages of the periods. They read the sensors the integration creates for the past periods (`averages_period`, `overall_average_period`, `grades_period`, `evaluations_period`), named after its "Periods" sensor; shown only when such sensors exist (none during the first term), `show_periods: false` hides them (#7, suggested by @mielikki33).
+
 ## 1.1.1 - 2026-11-13
 
 ### Fixes

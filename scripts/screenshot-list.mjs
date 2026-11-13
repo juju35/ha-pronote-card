@@ -17,6 +17,8 @@ export const shots = [
   ...both("card-homework", "pronote-card", 460, ALEX, { clicks: ['[data-action="tab"][data-tab="homework"]'] }),
   ...both("card-homework-popup", "pronote-card", 460, ALEX, { clicks: ['[data-action="tab"][data-tab="homework"]', '[data-action="homework"][data-index="2"]'] }),
   ...both("card-grades", "pronote-card", 460, { ...ALEX, collapsed: [] }, { clicks: ['[data-action="tab"][data-tab="grades"]'] }),
+  // A past period picked with the period buttons (#7).
+  ...both("card-grades-period", "pronote-card", 460, { ...ALEX, collapsed: ["evaluations"] }, { clicks: ['[data-action="tab"][data-tab="grades"]', '[data-action="period"][data-period="term_1"]'] }),
   ...both("card-school-life", "pronote-card", 460, { ...ALEX, collapsed: [] }, { clicks: ['[data-action="tab"][data-tab="school_life"]'] }),
   ...both("mini-card", "pronote-mini-card", 380, ALEX),
   ...both("mini-card-students", "pronote-mini-card", 380, {}, { clicks: ['[data-action="student"][data-id="pronote_sam"]'] }),
