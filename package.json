@@ -1,0 +1,19 @@
+{
+  "name": "ha-pronote-card",
+  "version": "1.0.0",
+  "description": "Lovelace cards for Home Assistant showing the timetable, homework, grades and school life of the Pronote integration, for one or several students.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/build.mjs && node --check dist/pronote-card.js",
+    "test": "node --test test/*.test.mjs",
+    "screenshots": "node scripts/screenshots.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "acorn": "^8.19.0",
+    "css-tree": "^3.2.1",
+    "playwright": "^1.56.1"
+  }
+}
