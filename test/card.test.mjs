@@ -186,6 +186,36 @@ test("folding: a tap elsewhere (pointer), not a drag that ends outside; leaving 
   mini.disconnectedCallback();
 });
 
+test("no rewrite under a press: drawn by the click, or once released; focus kept for the keyboard only", async () => {
+  const card = render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "school_life" });
+  const before = html(card);
+  card.shadowRoot.listeners.pointerdown({});
+  card._html = "";
+  card._update();
+  assert.equal(html(card), before, "no rewrite under the pointer");
+  // The click renders at once.
+  click(card, { action: "toggle_section", section: "information" });
+  assert.match(html(card), /data-section="information" aria-expanded="true"/);
+  // A press with no click: drawn once released.
+  card.shadowRoot.listeners.pointerdown({});
+  card._toggled = new Map();
+  card._update();
+  assert.match(html(card), /aria-expanded="true"/, "held");
+  card._onPressEnd();
+  await new Promise((r) => setTimeout(r, 5));
+  assert.match(html(card), /data-section="information" aria-expanded="false"/);
+  // After a pointer press, no focus put back on a rewrite; after a key, kept.
+  let spots = 0;
+  card._focusedSpot = () => (spots++, null);
+  card._html = "";
+  card._update();
+  assert.equal(spots, 0, "pointer: focus not kept");
+  card.shadowRoot.listeners.keydown({ key: "Tab", target: {} });
+  card._html = "";
+  card._update();
+  assert.equal(spots, 1, "keyboard: focus kept");
+});
+
 test("tabs: the list and order of the tabs, and the default one", () => {
   const out = html(render(pc.PronoteCard, { device: "Alex Moreau", tabs: ["grades", "homework"] }));
   assert.match(out, /data-tab="grades" aria-selected="true"[\s\S]*data-tab="homework" aria-selected="false"/);
