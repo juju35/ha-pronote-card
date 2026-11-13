@@ -155,6 +155,37 @@ test("school life: counters and folding sections, folded back by a click elsewhe
   assert.match(out, /class="unread"/);
 });
 
+test("folding: a tap elsewhere (pointer), not a drag that ends outside; leaving the page folds back too", () => {
+  const card = render(pc.PronoteCard, { device: "Alex Moreau", default_tab: "school_life" });
+  card.connectedCallback();
+  const open = () => /data-section="information" aria-expanded="true"/.test(html(card));
+  click(card, { action: "toggle_section", section: "information" });
+  assert.ok(open());
+  // Pressed in the card and released outside of it (a slider dragged out): nothing folds.
+  card._outside.tap({ composedPath: () => [card] });
+  assert.ok(open());
+  // A tap on a spot that sends no click (iOS): the pointer alone folds it.
+  card._outside.tap({ composedPath: () => [] });
+  assert.ok(!open());
+  // Left unfolded and back on the page: folded.
+  click(card, { action: "toggle_section", section: "information" });
+  card.disconnectedCallback();
+  card.connectedCallback();
+  assert.ok(!open());
+  card.disconnectedCallback();
+  // The mini card goes back to its compact view, on a tap elsewhere and when it leaves the page.
+  const mini = render(pc.PronoteMiniCard, { device: "Alex Moreau" });
+  mini.connectedCallback();
+  click(mini, { action: "zoom" });
+  mini._unzoom.tap({ composedPath: () => [] });
+  assert.doesNotMatch(html(mini), /tabs sections/);
+  click(mini, { action: "zoom" });
+  mini.disconnectedCallback();
+  mini.connectedCallback();
+  assert.doesNotMatch(html(mini), /tabs sections/);
+  mini.disconnectedCallback();
+});
+
 test("tabs: the list and order of the tabs, and the default one", () => {
   const out = html(render(pc.PronoteCard, { device: "Alex Moreau", tabs: ["grades", "homework"] }));
   assert.match(out, /data-tab="grades" aria-selected="true"[\s\S]*data-tab="homework" aria-selected="false"/);

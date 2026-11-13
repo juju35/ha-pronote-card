@@ -488,6 +488,42 @@ const isOutside = (card, ev) => {
   const path = ev.composedPath();
   return !path.includes(card) && !path.some((n) => DIALOG_TAGS.has(n.tagName));
 };
+
+// "A click elsewhere" is caught on the pointer, not only on the click event: on iOS (Safari and the companion app)
+// a tap on something that is not clickable (the background, an empty spot, a card with no action) sends no click to
+// the page. The handler runs when the press and the release are both outside the card (a slider dragged out of the
+// card does not count), and a scroll does not count (the browser cancels the pointer); keyboard clicks still go
+// through the click event. The handler keeps its own checks (outside of the card, not in a dialog).
+const watchOutside = (card, handler) => {
+  let downOutside = false;
+  const onDown = (ev) => {
+    downOutside = !ev.composedPath().includes(card);
+  };
+  const onUp = (ev) => {
+    if (downOutside) handler(ev);
+    downOutside = false;
+  };
+  const onClick = (ev) => {
+    if (ev.detail === 0) handler(ev);
+  };
+  return {
+    on() {
+      document.addEventListener("pointerdown", onDown, true);
+      document.addEventListener("pointerup", onUp, true);
+      document.addEventListener("click", onClick, true);
+    },
+    off() {
+      document.removeEventListener("pointerdown", onDown, true);
+      document.removeEventListener("pointerup", onUp, true);
+      document.removeEventListener("click", onClick, true);
+    },
+    // A tap (press and release at the same spot), for the tests.
+    tap(ev) {
+      onDown(ev);
+      onUp(ev);
+    },
+  };
+};
 // After the popup closes, clicks are ignored for this long: the second click of a double click on Close would
 // otherwise land on what lies under it.
 const CLOSE_GUARD_MS = 400;
@@ -683,8 +719,11 @@ class PronoteBase extends HTMLElement {
       if (this._popup) this._closePopup();
       else this._update();
     };
-    document.addEventListener("click", this._onOutside, true);
+    this._outside ??= watchOutside(this, (ev) => this._onOutside(ev));
+    this._outside.on();
     if (this._popup) window.addEventListener("keydown", this._onKey);
+    // Back on the page after leaving it: rendered again in its default state.
+    this._update();
     clearInterval(this._tick);
     this._tick = setInterval(() => {
       if (this._hass) this.hass = this._hass;
@@ -694,8 +733,12 @@ class PronoteBase extends HTMLElement {
   disconnectedCallback() {
     clearInterval(this._tick);
     this._tick = null;
-    document.removeEventListener("click", this._onOutside, true);
+    this._outside?.off();
     window.removeEventListener("keydown", this._onKey);
+    // Left (another dashboard view, a conditional card hidden): back to the defaults, so that the card does not come
+    // back unfolded or with its popup open.
+    this._toggled = new Map();
+    this._popup = null;
   }
 
   setConfig(config) {
@@ -1380,13 +1423,16 @@ class PronoteMiniCard extends PronoteCard {
   }
 
   connectedCallback() {
+    this._unzoom ??= watchOutside(this, this._onUnzoom);
+    this._unzoom.on();
     super.connectedCallback();
-    document.addEventListener("click", this._onUnzoom, true);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    document.removeEventListener("click", this._onUnzoom, true);
+    this._unzoom?.off();
+    // Back to the compact view once off the screen.
+    this._zoomed = false;
   }
 
   getCardSize() {
