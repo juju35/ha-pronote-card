@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 - 2026-11-13
+
+### Features
+- **Sidebar panel** (`pronote-panel`, optional, declared with `panel_custom`): a full-page Pronote view with text tabs (Today, Timetable, Homework, Grades, School life), the tab in the address, one button per student in the header, laid out in columns on wide screens. The cards stay independent of it.
+- Icon of the project (`brand/icon.svg`, `icon.png`, `icon@2x.png`): the cards' school glyph on a tile in their accent color, with an "A+" badge; shown at the top of the README and on the panel's Today tab.
+
 ## 1.0.0 - 2026-11-13
 
 ### Features

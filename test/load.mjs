@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { NOW } from "../scripts/mock-states.mjs";
 
-const source = ["i18n.js", "pronote-card.js"].map((f) => readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8")).join("\n");
+const source = ["i18n.js", "pronote-card.js", "pronote-panel.js"].map((f) => readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8")).join("\n");
 
 const fakeRoot = () => ({
   innerHTML: "",
@@ -90,6 +90,7 @@ const exportsOf = (sandbox) =>
   vm.runInContext(
     `({ STRINGS, esc, lang, intlLocale, parseNum, gradeClass, levelClass, roleOf, resolve, findStudents, studentName, keyOf, addDays, dayLabel, lessonState, sceneSvg,
        PronoteCard: customElements.get("pronote-card"), PronoteMiniCard: customElements.get("pronote-mini-card"),
-       PronoteCardEditor: customElements.get("pronote-card-editor"), PronoteMiniCardEditor: customElements.get("pronote-mini-card-editor"), window })`,
+       PronoteCardEditor: customElements.get("pronote-card-editor"), PronoteMiniCardEditor: customElements.get("pronote-mini-card-editor"),
+       PronotePanel: customElements.get("pronote-panel"), window })`,
     sandbox,
   );

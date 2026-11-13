@@ -1,5 +1,7 @@
 # ha-pronote-card
 
+<img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/brand/icon.png" alt="Pronote Card icon" width="96" align="right">
+
 [![Marketplace](https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/)
 [![HACS Validation](https://github.com/juju35/ha-pronote-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/juju35/ha-pronote-card/actions/workflows/hacs.yml)
 [![Validate](https://github.com/juju35/ha-pronote-card/actions/workflows/validate.yml/badge.svg)](https://github.com/juju35/ha-pronote-card/actions/workflows/validate.yml)
@@ -8,7 +10,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/juju35/ha-pronote-card/blob/main/LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/julienstep9)
 
-Lovelace cards for Home Assistant showing the school life of your children from **Pronote**, the school management software used by French schools: today's and the next school day's **timetable** (canceled and changed lessons stand out), **homework** (done or to do), latest **grades** and **averages**, **evaluations** and **school life** (absences, late arrivals, punishments, menus, information), for one or several students.
+Lovelace cards for Home Assistant showing the school life of your children from **Pronote**, the school management software used by French schools: today's and the next school day's **timetable** (canceled and changed lessons stand out), **homework** (done or to do), latest **grades** and **averages**, **evaluations** and **school life** (absences, late arrivals, punishments, menus, information), for one or several students. An optional **sidebar panel** shows the same on a full page.
 
 The cards work on top of the community [Pronote integration](https://github.com/delphiki/hass-pronote). Entities are **discovered automatically** from the Home Assistant registries: every Pronote account is a student, you don't pick its sensors one by one, and it works whatever your Home Assistant language or entity ids.
 
@@ -159,6 +161,32 @@ language: fr
 | `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `tabs`, `collapsed`… can be set on the mini card too) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
 | `language` | both | Auto | Force language: `fr`, `en`, `de`, `es`, `sr`, `sr-Latn`, `it`, `nl`, `pt`, `pl`, `ro`, `da`, `sv`, `bg`, `ru`, `uk`, `hu`, `sk`, `cs`, `sl`, `lv` or `el` (auto-detects from HA settings) |
 
+## Sidebar panel (optional)
+
+The same bundle also holds a **Pronote** page for the sidebar. The cards never need it: add it only if you want it. It draws its own full-page layout (it does not embed the cards), with text tabs under the header: **Today** (the student, the lesson going on or the next one, the timetable, the homework for the next school day, the latest grades, the school life counters and the menu), **Timetable** (today and the next school day side by side), **Homework**, **Grades** and **School life** (laid out in columns). The tab is in the address (`/pronote/homework`), and with several students a button per student sits in the header (the one picked is remembered by the browser).
+
+Declare it in `configuration.yaml`, pointing at the file the Marketplace installed, then restart Home Assistant:
+
+```yaml
+panel_custom:
+  - name: pronote-panel
+    sidebar_title: Pronote
+    sidebar_icon: mdi:school
+    url_path: pronote
+    module_url: /local/community/ha-pronote-card/pronote-card.js
+    # require_admin: true   # to keep it for administrators
+    config:                 # optional, the card options below
+      devices: [Alex Moreau, Sam Moreau]
+      default_tab: today    # today, timetable, homework, grades or school_life
+      max_grades: 10        # 10 by default on the panel
+```
+
+`config` takes the options of the full card (`device`, `devices`, `title`, `show_room`, `show_teacher`, `show_canceled`, `show_done_homework`, `show_class_average`, `show_picture`, `max_grades`, `language`), plus `default_tab`, which can also be `today`. Sections are always unfolded on the panel.
+
+| Today | Grades (dark theme) |
+|---|---|
+| <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/panel.png" alt="panel today" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/panel-grades-dark.png" alt="panel grades dark" width="480"> |
+
 ## Screenshots
 
 All screenshots use made-up students, schools and teachers, with the clock set on a Tuesday at 10:20.
@@ -206,6 +234,13 @@ The lesson going on or the next one, the changes still to come and the homework 
 | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card.png" alt="mini card" width="380"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-dark.png" alt="mini card dark" width="380"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-students.png" alt="mini card with two students" width="380"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-students-dark.png" alt="mini card with two students dark" width="380"> |
 
+### Sidebar panel
+
+| Light | Dark |
+|---|---|
+| <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/panel.png" alt="panel today" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/panel-dark.png" alt="panel today dark" width="480"> |
+| <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/panel-grades.png" alt="panel grades" width="480"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/panel-grades-dark.png" alt="panel grades dark" width="480"> |
+
 ### Animations
 
 The picture of the school follows the student's day, on both cards, and settles back to a still picture when nothing is going on. Each state plays its own animation, and every one of them honours `prefers-reduced-motion`.
@@ -247,10 +282,10 @@ The cards read the Home Assistant entity and device registries instead of entity
 
 ```bash
 npm install
-npm run build        # bundles src/i18n.js + src/pronote-card.js into dist/pronote-card.js (+ one translation file per language)
+npm run build        # bundles src/i18n.js + src/pronote-card.js + src/pronote-panel.js into dist/pronote-card.js (+ one translation file per language)
 npm run check        # builds and checks the card (run in CI)
 npm test             # unit tests (node --test)
-npm run screenshots  # renders the cards (and one GIF per animated state, needs ffmpeg) with mock data into screenshots/
+npm run screenshots  # renders the cards and the panel (and one GIF per animated state, needs ffmpeg) with mock data into screenshots/
 ```
 
 `dist/` is not committed: `npm run build` creates it locally, CI builds it on every push, and the release workflow attaches the built files to the release, which is where the Marketplace installs it from. The screenshots are rendered by the **Screenshots** workflow on every pull request and committed to its branch.
