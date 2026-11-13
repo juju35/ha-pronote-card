@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 - 2026-11-13
 
 ### Features
 - **Sidebar panel** (`pronote-panel`, optional, declared with `panel_custom`): a full-page Pronote view with text tabs (Today, Timetable, Homework, Grades, School life), the tab in the address, one button per student in the header, laid out in columns on wide screens. The cards stay independent of it.
