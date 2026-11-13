@@ -424,3 +424,19 @@ test("both cards and their editors are registered, with a stub config and the vi
   assert.deepEqual(plain(pc.window.customCards.map((c) => c.type)), ["pronote-card", "pronote-mini-card"]);
   assert.ok(pc.PronoteCardEditor && pc.PronoteMiniCardEditor);
 });
+
+test("mini editor: every option of the full card used by the detailed view, with labels, plus zoom", () => {
+  const names = (Editor) => {
+    const ed = new Editor();
+    ed._hass = makeHass({}, { language: "fr" });
+    ed._config = {};
+    return ed._schema().flatMap((f) => (f.schema ? f.schema.map((x) => x.name) : [f.name]));
+  };
+  const full = names(pc.PronoteCardEditor);
+  const mini = names(pc.PronoteMiniCardEditor);
+  for (const name of full.filter((n) => n !== "devices")) assert.ok(mini.includes(name), name);
+  for (const name of ["device", "zoom", "tabs", "default_tab", "max_grades", "collapsed", "show_periods"]) assert.ok(mini.includes(name), name);
+  assert.ok(!mini.includes("devices"));
+  for (const name of mini) assert.ok(pc.STRINGS.fr[name], name);
+  assert.deepEqual(plain(pc.PronoteMiniCardEditor.defaults), plain(pc.PronoteCardEditor.defaults));
+});

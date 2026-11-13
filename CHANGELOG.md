@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 - 2026-11-14
+
+### Fixes
+- **Mini card visual editor**: it now offers every option of the full card that its detailed view uses (`tabs`, `default_tab`, `max_grades`, `collapsed`, `show_teacher`, `show_canceled`, `show_done_homework`, `show_class_average`, `show_min_max`, `show_coefficient`, `show_periods`), beside `device` and `zoom`; the README lists them for both cards.
+
 ## 1.2.0 - 2026-11-13
 
 ### Features

@@ -1732,19 +1732,18 @@ class PronoteCardEditor extends PronoteEditorBase {
   }
 }
 
-class PronoteMiniCardEditor extends PronoteEditorBase {
+// The mini card's detailed view is the full card: its editor has every option of the full card (one student,
+// `device`, instead of `devices`), plus `zoom`.
+class PronoteMiniCardEditor extends PronoteCardEditor {
   static get toggles() {
-    return [
-      ["show_title", true],
-      ["show_subtitle", true],
-      ["show_picture", true],
-      ["show_room", true],
-      ["zoom", true],
-    ];
+    return [...PronoteCardEditor.toggles, ["zoom", true]];
   }
 
   static fields(tr, students) {
-    return [{ name: "device", selector: { select: { mode: "dropdown", options: [{ value: "", label: tr("all_students") }, ...students] } } }];
+    return [
+      { name: "device", selector: { select: { mode: "dropdown", options: [{ value: "", label: tr("all_students") }, ...students] } } },
+      ...PronoteCardEditor.fields(tr, students).filter((f) => f.name !== "devices"),
+    ];
   }
 }
 
