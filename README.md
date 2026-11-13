@@ -1,7 +1,5 @@
 # ha-pronote-card
 
-<img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/brand/icon.png" alt="Pronote Card icon" width="96" align="right">
-
 [![Marketplace](https://img.shields.io/badge/Marketplace-Custom-41BDF5.svg)](https://www.home-assistant.io/integrations/marketplace/)
 [![HACS Validation](https://github.com/juju35/ha-pronote-card/actions/workflows/hacs.yml/badge.svg)](https://github.com/juju35/ha-pronote-card/actions/workflows/hacs.yml)
 [![Validate](https://github.com/juju35/ha-pronote-card/actions/workflows/validate.yml/badge.svg)](https://github.com/juju35/ha-pronote-card/actions/workflows/validate.yml)
@@ -9,6 +7,8 @@
 [![Release](https://img.shields.io/github/v/release/juju35/ha-pronote-card)](https://github.com/juju35/ha-pronote-card/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/juju35/ha-pronote-card/blob/main/LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/julienstep9)
+
+<p align="center"><img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/brand/icon.png" alt="Pronote Card" width="120"></p>
 
 Lovelace cards for Home Assistant showing the school life of your children from **Pronote**, the school management software used by French schools: today's and the next school day's **timetable** (canceled and changed lessons stand out), **homework** (done or to do), latest **grades** and **averages**, **evaluations** and **school life** (absences, late arrivals, punishments, menus, information), for one or several students. An optional **sidebar panel** shows the same on a full page.
 
