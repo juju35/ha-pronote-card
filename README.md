@@ -153,18 +153,18 @@ language: fr
 | `show_subtitle` | both | `true` | Show the class and the school under the title |
 | `show_picture` | both | `true` | Show the animated picture of the school |
 | `show_room` | both | `true` | Show the rooms of the lessons |
-| `show_teacher` | full | `true` | Show the teachers of the lessons |
-| `show_canceled` | full | `true` | Show the canceled lessons in the timetable (they stay in the alerts beside the picture) |
-| `tabs` | full | all four | Tabs shown, in this order, among `timetable`, `homework`, `grades` and `school_life` (one tab only: no tab bar) |
-| `default_tab` | full | `timetable` | Tab shown when the card opens |
-| `show_done_homework` | full | `true` | Show the homework already done (checked) in the Homework tab |
-| `show_class_average` | full | `true` | Show the class average of each grade and the class marker on the averages |
-| `show_min_max` | full | `true` | Show the class min and max of each grade and of each subject average (when the integration gives them) |
-| `show_coefficient` | full | `true` | Show the coefficient of each grade, beside its date |
-| `show_periods` | full | `true` | Show the period buttons of the Grades tab (only when the integration has sensors for past periods) |
-| `max_grades` | full | `5` | Number of latest grades shown (the integration keeps 11) |
-| `collapsed` | full | `[evaluations, information]` | Sections folded by default, among `grades`, `averages`, `evaluations`, `absences`, `delays`, `punishments`, `menus` and `information` (`[]` to unfold everything). Click a section title (or Tab to it and press Enter or Space) to fold or unfold it; a click elsewhere on the page folds them back |
-| `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `tabs`, `collapsed`… can be set on the mini card too) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
+| `show_teacher` | both | `true` | Show the teachers of the lessons |
+| `show_canceled` | both | `true` | Show the canceled lessons in the timetable (they stay in the alerts beside the picture) |
+| `tabs` | both | all four | Tabs shown, in this order, among `timetable`, `homework`, `grades` and `school_life` (one tab only: no tab bar) |
+| `default_tab` | both | `timetable` | Tab shown when the card opens |
+| `show_done_homework` | both | `true` | Show the homework already done (checked) in the Homework tab |
+| `show_class_average` | both | `true` | Show the class average of each grade and the class marker on the averages |
+| `show_min_max` | both | `true` | Show the class min and max of each grade and of each subject average (when the integration gives them) |
+| `show_coefficient` | both | `true` | Show the coefficient of each grade, beside its date |
+| `show_periods` | both | `true` | Show the period buttons of the Grades tab (only when the integration has sensors for past periods) |
+| `max_grades` | both | `5` | Number of latest grades shown (the integration keeps 11) |
+| `collapsed` | both | `[evaluations, information]` | Sections folded by default, among `grades`, `averages`, `evaluations`, `absences`, `delays`, `punishments`, `menus` and `information` (`[]` to unfold everything). Click a section title (or Tab to it and press Enter or Space) to fold or unfold it; a click elsewhere on the page folds them back |
+| `zoom` | mini | `true` | Detail button at the top right of the mini card: it shows the full card's content (with the same options, so `tabs`, `collapsed`… can be set on the mini card too, in its visual editor as well) and switches back to the compact view; a click outside the card also brings the compact view back. `false` removes the button |
 | `language` | both | Auto | Force language: `fr`, `en`, `de`, `es`, `sr`, `sr-Latn`, `it`, `nl`, `pt`, `pl`, `ro`, `da`, `sv`, `bg`, `ru`, `uk`, `hu`, `sk`, `cs`, `sl`, `lv` or `el` (auto-detects from HA settings) |
 
 ## Sidebar panel (optional)
