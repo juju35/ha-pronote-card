@@ -671,6 +671,109 @@ const SCENE_STYLE = `
   }
 `;
 
+// ── Illustrated header ──
+// The banner: the title on the left over a warm wall, and at the right a desk with the school bag, a pile of
+// exercise books and what the student's day is at: "homework" (homework to do for the next school day: the pen
+// writes on the sheet), "grade" (a grade of the last days: the teacher's stamp lands on the test paper),
+// "message" (unread school information: the envelope bobs, its badge counts them), "done" (that homework all done:
+// a green check is drawn on the sheet, sparkles twinkle), "none" (no homework: the books stay closed, the pencil
+// rests). A 10 px parquet strip runs under the whole banner; the desk's feet stand on it. Drawn in a 200 × 80
+// picture anchored bottom right; `uid` keeps each card's ids apart on a page with several cards.
+const deskSvg = (state, uid, stamp = "", count = 0) => {
+  const sheet = (body) =>
+    `<g class="sheet" transform="translate(170 26)"><rect x="-13" y="-11" width="26" height="22" rx="2" fill="#fff" stroke="#c9ced6"/>${body}</g>`;
+  const lines = `<path d="M-8 -5h16M-8 0h12M-8 5h14" stroke="#c3cad3" stroke-width="1.2" stroke-linecap="round"/>`;
+  const writing = `<path class="write w1" d="M-8 -5h16" stroke="var(--pc-accent)" stroke-width="1.2" stroke-linecap="round" pathLength="10"/>
+      <path class="write w2" d="M-8 0h12" stroke="var(--pc-accent)" stroke-width="1.2" stroke-linecap="round" pathLength="10"/>
+      <path class="write w3" d="M-8 5h14" stroke="var(--pc-accent)" stroke-width="1.2" stroke-linecap="round" pathLength="10"/>`;
+  const pen = `<g class="pen" transform="translate(-8 -5)"><g><path d="M0 0l1.6-4.4 7.6-11 2.8 2-7.6 11z" fill="#f5b400" stroke="#9a7000" stroke-width=".5"/><path d="M0 0l1.6-4.4 2.8 2z" fill="#3c3c3c"/></g></g>`;
+  const fs = stamp.length > 3 ? 4.6 : stamp.length > 2 ? 5.4 : 6.4;
+  const top = {
+    homework: sheet(`${writing}${pen}`),
+    done: `${sheet(`${lines}<g class="tick"><circle cx="7" cy="6" r="6" fill="var(--pc-ok)"/><path class="check" d="M4 6.3l2 2 4-4.3" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" pathLength="20"/></g>`)}
+      <g class="sparkles" fill="#f6c343"><path class="s1" d="M190 10l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/><path class="s2" d="M150 12l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/><path class="s3" d="M192 36l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z"/></g>`,
+    grade: sheet(
+      `<path d="M-9 -6h14M-9 -1h10" stroke="#c3cad3" stroke-width="1.2" stroke-linecap="round"/><g transform="rotate(-12 4 4)"><g class="stamp"><circle cx="4" cy="4" r="8" fill="rgba(229,72,77,.08)" stroke="#e5484d" stroke-width="1.4"/><text x="4" y="${4 + fs * 0.36}" text-anchor="middle" font-size="${fs}" font-weight="700" font-family="sans-serif" fill="#e5484d">${esc(stamp)}</text></g></g>`,
+    ),
+    message: `<g class="bubble"><rect x="152" y="12" width="36" height="22" rx="4" fill="#fff" stroke="#c9ced6"/><path d="M156 16l14 8 14-8" stroke="#2f80ed" stroke-width="1.2" fill="none" stroke-linejoin="round"/>${
+      count ? `<g class="count"><circle cx="188" cy="12" r="5" fill="#e5484d"/><text x="188" y="14.3" text-anchor="middle" font-size="6.4" font-weight="700" fill="#fff" font-family="sans-serif">${count > 9 ? "9+" : count}</text></g>` : ""
+    }</g>`,
+    none: `<g class="rest"><path d="M146 47.6l26-3.2" stroke="#f5b400" stroke-width="2.2" stroke-linecap="round"/><path d="M146 47.6l-2.6.3" stroke="#3c3c3c" stroke-width="2.2" stroke-linecap="round"/></g>`,
+  }[state];
+  return `<div class="pc-ground" aria-hidden="true"></div><svg class="pc-desk ${state}" viewBox="0 0 200 80" preserveAspectRatio="xMaxYMax meet" aria-hidden="true" focusable="false">
+    <defs><linearGradient id="pc-bag-${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ee5a5f"/><stop offset="1" stop-color="#d63c42"/></linearGradient></defs>
+    <rect class="desk-leg" x="100" y="65" width="3" height="15"/><rect class="desk-leg" x="193" y="65" width="3" height="15"/>
+    <rect class="desk-top" x="96" y="62" width="104" height="3" rx=".6"/>
+    <g transform="translate(120 62)"><path d="M-8 -30q0-8 8-8t8 8" stroke="#c43a3a" stroke-width="2.4" fill="none"/><rect x="-16" y="-30" width="32" height="30" rx="5" fill="url(#pc-bag-${uid})"/>
+      <rect x="-10" y="-22" width="20" height="10" rx="2" fill="#c43a3a"/><rect x="-2" y="-14" width="4" height="4" rx="1" fill="#f5c84a"/></g>
+    <g transform="translate(160 62)"><rect x="-16" y="-4" width="32" height="4" rx=".6" fill="#2f80ed"/><rect x="-14" y="-8" width="28" height="4" rx=".6" fill="#f5b400"/><rect x="-15" y="-12" width="30" height="4" rx=".6" fill="#43a047"/>
+      ${state === "none" ? "" : `<rect x="-13" y="-16" width="26" height="4" rx=".6" fill="#8e5bd6"/>`}</g>
+    ${top}
+  </svg>`;
+};
+
+const BANNER_STYLE = `
+  .banner { position: relative; overflow: hidden; height: 90px; color: #2b2118; background: #fdf3e7; }
+  .banner.night { color: #fff; background: #2a2a36; }
+  .pc-desk { position: absolute; right: 0; bottom: 10px; height: 80px; width: min(200px, 62%); overflow: visible; }
+  .pc-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 10px;
+               background: repeating-linear-gradient(90deg, #c99a6b 0 38px, #b98a5c 38px 40px); box-shadow: inset 0 2px 0 #a97c50; }
+  .night .pc-ground { background: repeating-linear-gradient(90deg, #4a3a2c 0 38px, #3e3024 38px 40px); box-shadow: inset 0 2px 0 #5c4836; }
+  .desk-top { fill: #c9b79c; } .desk-leg { fill: #b5a184; }
+  .night .desk-top { fill: #3c4558; } .night .desk-leg { fill: #333b4c; }
+  .night .pc-desk > g, .night .pc-desk .sheet { filter: brightness(.9); }
+  /* The mini card's detail button sits top right: the desk moves aside so that it never hides the sheet. */
+  .zoomable .pc-desk { right: 28px; width: min(200px, calc(62% - 28px)); }
+  .zoomable .htext { right: calc(min(200px, calc(62% - 28px)) * .52 + 28px); }
+  .htext { position: absolute; z-index: 1; left: 12px; top: 0; bottom: 10px; right: calc(min(200px, 62%) * .52);
+           display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .htext .titles { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .htext .name { font-size: 16px; font-weight: 500; }
+  .banner .sub { color: #6b5a48; }
+  .banner .status { font-size: 12px; line-height: 16px; color: #3f3226; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .banner.night .sub { color: rgba(255,255,255,.66); }
+  .banner.night .status { color: rgba(255,255,255,.86); }
+  /* The round icon on the wall: white glass, the icon in the colour of the status. */
+  .banner .type-icon { background: rgba(255,255,255,.66); box-shadow: inset 0 0 0 1px rgba(120,90,60,.16); }
+  .banner .type-icon .icon, .banner .type-icon:is(.ok, .warn, .crit, .idle, .active) .icon { fill: color-mix(in srgb, var(--pc-tint) 82%, #000); }
+  .banner.night .type-icon { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
+  .banner.night .type-icon .icon, .banner.night .type-icon:is(.ok, .warn, .crit, .idle, .active) .icon { fill: color-mix(in srgb, var(--pc-tint) 72%, #fff); }
+  .banner .zoom { position: absolute; z-index: 2; top: 6px; right: 6px; margin: 0; display: grid; place-items: center; color: #2b2118; background: rgba(255,255,255,.6); }
+  .banner.night .zoom { color: #fff; background: rgba(20,20,30,.5); }
+  .pc-desk .write { stroke-dasharray: 10; stroke-dashoffset: 0; }
+  .pc-desk.homework .write { animation: pc-write 3s linear infinite; }
+  .pc-desk.homework .w2 { animation-name: pc-write2; } .pc-desk.homework .w3 { animation-name: pc-write3; }
+  .pc-desk.homework .pen { animation: pc-pen 3s linear infinite; }
+  .pc-desk .tick { transform-box: fill-box; transform-origin: center; animation: pc-pop .35s cubic-bezier(.3,1.6,.6,1) both; }
+  .pc-desk .check { stroke-dasharray: 20; animation: pc-draw .5s ease-out .25s both; }
+  .pc-desk .sparkles path { transform-box: fill-box; transform-origin: center; animation: pc-twinkle 1.8s ease-in-out infinite; }
+  .pc-desk .sparkles .s2 { animation-delay: .6s; } .pc-desk .sparkles .s3 { animation-delay: 1.2s; }
+  .pc-desk .stamp { transform-box: fill-box; transform-origin: center; animation: pc-stamp 3.2s cubic-bezier(.3,1.4,.6,1) infinite; }
+  .pc-desk .bubble { animation: pc-bob 2.4s ease-in-out infinite alternate; }
+  .pc-desk .count { transform-box: fill-box; transform-origin: center; animation: pc-pulse 1.2s ease-in-out infinite alternate; }
+  /* The pen's tip follows the three lines as they are written (pc-write in SCENE_STYLE). */
+  @keyframes pc-pen {
+    0% { transform: translate(-8px, -5px); } 25% { transform: translate(8px, -5px); } 30% { transform: translate(-8px, 0); }
+    55% { transform: translate(4px, 0); } 60% { transform: translate(-8px, 5px); } 78%, 92% { transform: translate(6px, 5px); }
+    100% { transform: translate(-8px, -5px); }
+  }
+  @keyframes pc-stamp { 0% { transform: scale(1.8); opacity: 0; } 12%, 88% { transform: scale(1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+  @keyframes pc-bob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+  @keyframes pc-pulse { from { transform: scale(1); } to { transform: scale(1.18); } }
+  /* Narrow card: no room for the desk beside the text, the wall alone stays. */
+  @container (max-width: 260px) { .pc-desk { display: none; } .htext { right: 40px; } }
+`;
+
+// Night picture: forced by illustration_theme, else the sun below the horizon, else Home Assistant's dark mode.
+const isNight = (hass, config) => {
+  if (config.illustration_theme === "night") return true;
+  if (config.illustration_theme === "day") return false;
+  const sun = hass?.states?.["sun.sun"];
+  if (valid(sun)) return sun.state === "below_horizon";
+  return !!hass?.themes?.darkMode;
+};
+let bannerUid = 0;
+
 // ── Lessons ──
 // A lesson of the day as the cards draw it, from the `lessons` attribute of a timetable sensor.
 const lessonState = (l, nowMs) => {
@@ -704,6 +807,7 @@ class PronoteBase extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._html = "";
     this._toggled = new Map();
+    this._uid = ++bannerUid;
     this.shadowRoot.addEventListener("click", (ev) => this._onClick(ev));
     // No rewrite of the card between the press and the release: Home Assistant updates the card several times a
     // second, and a rewrite under the pointer replaces the element pressed, so that the click lands on the card
@@ -762,7 +866,7 @@ class PronoteBase extends HTMLElement {
     const { students } = findStudents(h, this._config);
     if (!students) return null;
     const ids = students.flatMap((s) => [...Object.values(s.entities), ...Object.values(s.periods || {}).flatMap((p) => Object.values(p))]);
-    return [h.entities, h.devices, h.language, h.locale, h.themes?.darkMode, Math.floor(now() / 60000), ...ids.map((id) => h.states[id])];
+    return [h.entities, h.devices, h.language, h.locale, h.themes?.darkMode, h.states["sun.sun"], Math.floor(now() / 60000), ...ids.map((id) => h.states[id])];
   }
 
   // A click elsewhere on the page folds the sections back to their defaults and closes the popup.
@@ -1055,11 +1159,40 @@ class PronoteBase extends HTMLElement {
     return [cls.attributes?.class_name || cls.state, cls.attributes?.establishment].filter(Boolean).join(" · ");
   }
 
+  // What the banner shows (see deskSvg), its status line, the entity that line opens and the icon's state colour.
+  _bannerState(s, days) {
+    const e = s.entities;
+    const locale = this._locale();
+    const tr = (k) => this._t(k);
+    const day = dayLabel(tr, locale, days.nextKey);
+    const hw = this._homework(s).filter((h) => keyOf(h.date) === days.nextKey);
+    const left = hw.filter((h) => !h.done).length;
+    const alert = this._iconState(days);
+    const next = this._nextLesson(s, days);
+    const running = !!(next.lesson && lessonState(next.lesson, now()).running);
+    const pick = (scene, text, entity, calm) => ({ scene, text, entity, icon: alert || (running ? "" : calm) });
+    if (left) return { ...pick("homework", this._t("homework_left", { n: left, day }), e.homework, ""), count: left };
+    // A grade of the last three days (Pronote dates a grade by its test, published a few days later at most).
+    const g = list(this._s(e.grades), "grades").find((x) => x && typeof x === "object" && keyOf(x.date) >= addDays(days.today, -2));
+    if (g) {
+      const v = parseNum(g.grade);
+      const out = parseNum(g.out_of) ?? 20;
+      const value = v === null ? String(g.grade ?? "") : fmtNum(v, locale);
+      const text = this._t("new_grade", { grade: v === null ? value : `${value}/${fmtNum(out, locale)}` });
+      return { ...pick("grade", text, e.grades, ""), stamp: value.slice(0, 4) };
+    }
+    const unread = list(this._s(e.information), "information_and_surveys").filter((i) => i && i.read === false).length;
+    if (unread) return { ...pick("message", `${this._t("information")} · ${this._t("unread", { n: unread })}`, e.information, ""), count: unread };
+    if (hw.length) return pick("done", this._t("homework_done", { day }), e.homework, "ok");
+    return pick("none", e.homework ? this._t("no_homework_for", { day }) : "", e.homework, "idle");
+  }
+
   _header(s, students, days) {
     const c = this._config;
     // The title is the student shown (the one of the selected tab when the card shows several).
     const title = (students.length === 1 && c.title) || studentName(this._hass, s);
     const sub = this._subtitle(s);
+    if (c.illustration !== false) return this._banner(s, days, title, sub);
     const state = this._iconState(days);
     return `
       <div class="header">
@@ -1071,6 +1204,38 @@ class PronoteBase extends HTMLElement {
         ${this._chip(s)}
         ${this._zoomButton()}
       </div>`;
+  }
+
+  // The illustrated header: the icon and the texts on the wall, the desk at the right, the parquet under it all.
+  _banner(s, days, title, sub) {
+    const b = this._bannerState(s, days);
+    const hwState = this._s(s.entities.homework);
+    const unavailable = hwState && !valid(hwState) && b.scene === "none";
+    const text = unavailable ? this._t("unavailable") : b.text;
+    const icon = unavailable ? "idle" : b.icon;
+    const status = text
+      ? b.entity
+        ? `<div class="status clickable" role="button" tabindex="0" data-entity="${esc(b.entity)}" title="${esc(text)}">${esc(text)}</div>`
+        : `<div class="status">${esc(text)}</div>`
+      : "";
+    const zoom = this._zoomButton();
+    return `
+      <div class="banner${isNight(this._hass, this._config) ? " night" : ""}${zoom ? " zoomable" : ""}">
+        ${deskSvg(b.scene, this._uid, b.stamp, b.count)}
+        <div class="htext">
+          <div class="type-icon${icon ? ` ${icon}` : ""}">${svgIcon("school")}</div>
+          <div class="titles">
+            <div class="name">${esc(title)}</div>
+            ${sub ? `<div class="sub">${esc(sub)}</div>` : ""}
+            ${status}
+          </div>
+        </div>
+        ${zoom}
+      </div>`;
+  }
+
+  _bannerStyle() {
+    return this._config.illustration === false ? "" : BANNER_STYLE;
   }
 
   _zoomButton() {
@@ -1244,7 +1409,7 @@ class PronoteCard extends PronoteBase {
             .join("")}</div>`
         : "";
     const body = { timetable: () => this._timetable(s, days), homework: () => this._homeworkTab(s), grades: () => this._grades(s), school_life: () => this._schoolLife(s) }[tab]();
-    return `<style>${BASE_STYLE}${SCENE_STYLE}${FULL_STYLE}${DIALOG_STYLE}</style>
+    return `<style>${BASE_STYLE}${SCENE_STYLE}${FULL_STYLE}${DIALOG_STYLE}${this._bannerStyle()}</style>
       <ha-card>
         ${this._header(s, students, days)}
         ${this._studentTabs(s, students)}
@@ -1578,7 +1743,7 @@ class PronoteMiniCard extends PronoteCard {
           left ? `<span class="aside">${esc(this._t("to_do", { n: left }))}</span>` : ""
         }</div><div class="hw-list">${hw.map(([h, i]) => this._hwItem(h, i, hwEntity, { compact: true })).join("")}</div></div>`
       : "";
-    return `<style>${BASE_STYLE}${SCENE_STYLE}${MINI_STYLE}${DIALOG_STYLE}</style>
+    return `<style>${BASE_STYLE}${SCENE_STYLE}${MINI_STYLE}${DIALOG_STYLE}${this._bannerStyle()}</style>
       <ha-card>
         ${this._header(s, students, days)}
         ${this._studentTabs(s, students)}
@@ -1694,6 +1859,7 @@ class PronoteEditorBase extends HTMLElement {
 class PronoteCardEditor extends PronoteEditorBase {
   static get toggles() {
     return [
+      ["illustration", true],
       ["show_title", true],
       ["show_subtitle", true],
       ["show_picture", true],
@@ -1709,12 +1875,13 @@ class PronoteCardEditor extends PronoteEditorBase {
   }
 
   static get defaults() {
-    return { tabs: TABS, default_tab: "timetable", collapsed: DEFAULT_COLLAPSED, max_grades: DEFAULT_MAX_GRADES };
+    return { illustration_theme: "auto", tabs: TABS, default_tab: "timetable", collapsed: DEFAULT_COLLAPSED, max_grades: DEFAULT_MAX_GRADES };
   }
 
   static fields(tr, students) {
     return [
       { name: "devices", selector: { select: { multiple: true, mode: "dropdown", options: students } } },
+      { name: "illustration_theme", selector: { select: { mode: "dropdown", options: ["auto", "day", "night"].map((v) => ({ value: v, label: tr(`theme_${v}`) })) } } },
       { name: "tabs", selector: { select: { multiple: true, mode: "list", options: TABS.map((v) => ({ value: v, label: tr(v) })) } } },
       { name: "default_tab", selector: { select: { mode: "dropdown", options: TABS.map((v) => ({ value: v, label: tr(v) })) } } },
       { name: "max_grades", selector: { number: { min: 1, max: 11, mode: "box" } } },

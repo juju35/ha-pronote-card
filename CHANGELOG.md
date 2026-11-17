@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0 - 2026-11-17
+
+### Features
+- **Illustrated header** on the full and the mini card (90 px): the title on a warm wall at the left, a desk at the right with the school bag and a pile of exercise books, and a 10 px parquet strip under the whole banner. The desk follows the student's day: homework to do for the next school day (the pen writes on the sheet), a grade of the last three days (the teacher's stamp lands on the test paper, with the grade), unread school information (an envelope with its count), homework done (a green check is drawn, sparkles twinkle) or no homework (books closed, the pencil at rest). The status line under the title says it and opens the matching sensor.
+- The header icon always takes the colour of the status: red when a lesson of the day is canceled, orange when one has changed, the accent while there is something to do or a lesson is going on, green when the homework is done, grey when there is none.
+- **Night version** of the illustration, following `sun.sun` (else the dark theme); `illustration_theme: day | night` forces one. `illustration: false` keeps the classic header with its status chip. Both options are in the visual editors, translated into the 22 languages. Animations stop under `prefers-reduced-motion`.
+
 ## 1.2.1 - 2026-11-14
 
 ### Fixes
