@@ -415,6 +415,14 @@ test("the header icon turns red on a canceled lesson whatever the picture", () =
   assert.match(banner(out), /type-icon crit"$/);
 });
 
+test("the illustrated header has the status pill on the title row, in the colour of the icon", () => {
+  const pill = (over) => html(render(pc.PronoteMiniCard, ALEX, makeHass(over))).match(/<div class="trow"><div class="name">[^<]*<\/div><span class="chip clickable ([a-z]+)"[^>]*title="([^"]*)"/);
+  assert.deepEqual(pill(canceled).slice(1), ["crit", "Canceled"]);
+  assert.deepEqual(pill(homeworkToDo).slice(1), ["accent", "3 to do"]);
+  assert.deepEqual(pill({ ...homeworkDone, ...noUnread }).slice(1), ["ok", "1 to do"]);
+  assert.deepEqual(pill({ [HW]: { ...states[HW], state: "unavailable" } }).slice(1), ["idle", "Unavailable"]);
+});
+
 test("night: illustration_theme first, then the sun, then the dark theme", () => {
   const sun = (state) => ({ "sun.sun": { entity_id: "sun.sun", state, attributes: {} } });
   const night = (config, over, extra) => /class="banner night"/.test(html(render(pc.PronoteCard, { ...ALEX, ...config }, makeHass(over, extra))));

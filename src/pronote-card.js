@@ -308,7 +308,7 @@ const BASE_STYLE = `
   .clickable { cursor: pointer; }
   [role="button"]:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--primary-color, var(--pc-accent)); outline-offset: 2px; border-radius: 6px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
-  .ok { --c: var(--pc-ok); } .warn { --c: var(--pc-warn); } .crit { --c: var(--pc-crit); } .idle { --c: var(--pc-idle); } .active { --c: var(--pc-active); }
+  .accent { --c: var(--pc-accent); } .ok { --c: var(--pc-ok); } .warn { --c: var(--pc-warn); } .crit { --c: var(--pc-crit); } .idle { --c: var(--pc-idle); } .active { --c: var(--pc-active); }
   .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c, var(--pc-ok)); flex: none; display: inline-block; }
   .chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; white-space: nowrap;
           background: color-mix(in srgb, var(--c, var(--pc-ok)) 15%, transparent); color: color-mix(in srgb, var(--c, var(--pc-ok)) 50%, var(--primary-text-color));
@@ -738,8 +738,28 @@ const BANNER_STYLE = `
   .banner .type-icon .icon, .banner .type-icon:is(.ok, .warn, .crit, .idle, .active) .icon { fill: color-mix(in srgb, var(--pc-tint) 82%, #000); }
   .banner.night .type-icon { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
   .banner.night .type-icon .icon, .banner.night .type-icon:is(.ok, .warn, .crit, .idle, .active) .icon { fill: color-mix(in srgb, var(--pc-tint) 72%, #fff); }
-  .banner .zoom { position: absolute; z-index: 2; top: 6px; right: 6px; margin: 0; display: grid; place-items: center; color: #2b2118; background: rgba(255,255,255,.6); }
-  .banner.night .zoom { color: #fff; background: rgba(20,20,30,.5); }
+  /* Status pill right after the title, vertically centred on it; the title ellipsises first (≥ 4 characters). */
+  .trow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .htext { container: pc-head / inline-size; }
+  .trow .name { flex: 0 1 auto; min-width: 5ch; }
+  .banner .chip { flex: none; max-width: calc(100% - 5ch - 8px); line-height: 16px;
+                  background: color-mix(in srgb, var(--c) 18%, rgba(255,255,255,.78)); color: color-mix(in srgb, var(--c) 45%, #0d2a45); }
+  .banner.night .chip { background: color-mix(in srgb, var(--c) 30%, rgba(8,18,38,.55)); color: color-mix(in srgb, var(--c) 35%, #ffffff); }
+  /* Narrow header text (≈ ≤ 260 px card, or the desk beside it): the pill on its own line under the subtitle;
+     very narrow (≈ ≤ 200 px card): the dot alone, the label kept in its title and aria-label. */
+  @container pc-head (max-width: 215px) {
+    .htext .titles { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; }
+    .htext .titles > :is(.sub, .status) { justify-self: stretch; }
+    .trow { display: contents; }
+    .trow .name { max-width: 100%; }
+    .banner .chip { order: 9; max-width: 100%; margin-top: 2px; }
+  }
+  @container pc-head (max-width: 150px) { .banner .chip { padding: 4px; } .banner .chip .chip-text { display: none; } }
+  .banner .zoom { position: absolute; z-index: 2; top: 5px; right: 5px; margin: 0; display: grid; place-items: center; color: #33506b;
+                  background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(255,255,255,.7); backdrop-filter: blur(4px); }
+  .banner .zoom:hover { background: rgba(255,255,255,.75); color: #33506b; }
+  .banner.night .zoom { color: #fff; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+  .banner.night .zoom:hover { background: rgba(255,255,255,.22); color: #fff; }
   .pc-desk .write { stroke-dasharray: 10; stroke-dashoffset: 0; }
   .pc-desk.homework .write { animation: pc-write 3s linear infinite; }
   .pc-desk.homework .w2 { animation-name: pc-write2; } .pc-desk.homework .w3 { animation-name: pc-write3; }
@@ -761,7 +781,7 @@ const BANNER_STYLE = `
   @keyframes pc-bob { from { transform: translateY(0); } to { transform: translateY(-3px); } }
   @keyframes pc-pulse { from { transform: scale(1); } to { transform: scale(1.18); } }
   /* Narrow card: no room for the desk beside the text, the wall alone stays. */
-  @container (max-width: 260px) { .pc-desk { display: none; } .htext { right: 40px; } }
+  @container (max-width: 260px) { .pc-desk { display: none; } .htext, .zoomable .htext { right: 40px; } }
 `;
 
 // Night picture: forced by illustration_theme, else the sun below the horizon, else Home Assistant's dark mode.
@@ -1140,13 +1160,20 @@ class PronoteBase extends HTMLElement {
     return "";
   }
 
-  // Status chip at the right of the header: homework still to do.
-  _chip(s) {
+  // Status pill on the title row, in the colour of the header icon (`icon`, see _iconState / _bannerState): the
+  // canceled or changed lesson that makes it red or amber, otherwise the homework still to do.
+  _chip(s, days, icon) {
     const st = this._s(s.entities.homework);
     if (!st) return "";
     if (!valid(st)) return this._chipHtml("idle", this._t("unavailable"), st.entity_id);
+    const ls = days ? [...days.todays, ...days.next] : [];
+    if (icon === "crit") return this._chipHtml("crit", this._t("canceled"), st.entity_id);
+    const changed = ls.find((l) => !l.canceled && l.status);
+    if (icon === "warn" && changed) return this._chipHtml("warn", changed.status, st.entity_id);
     const todo = this._homework(s).filter((h) => !h.done).length;
-    return this._chipHtml(todo ? "active" : "ok", todo ? this._t("to_do", { n: todo }) : this._t("all_done"), st.entity_id);
+    // The panel (no header icon): active while homework is left, ok once all is done.
+    const cls = days ? icon || "accent" : todo ? "active" : "ok";
+    return this._chipHtml(cls, todo ? this._t("to_do", { n: todo }) : this._t("all_done"), st.entity_id);
   }
 
   _chipHtml(cls, text, entity) {
@@ -1201,7 +1228,7 @@ class PronoteBase extends HTMLElement {
           <div class="name">${esc(title)}</div>
           ${sub ? `<div class="sub">${esc(sub)}</div>` : ""}
         </div>
-        ${this._chip(s)}
+        ${this._chip(s, days, state)}
         ${this._zoomButton()}
       </div>`;
   }
@@ -1225,7 +1252,7 @@ class PronoteBase extends HTMLElement {
         <div class="htext">
           <div class="type-icon${icon ? ` ${icon}` : ""}">${svgIcon("school")}</div>
           <div class="titles">
-            <div class="name">${esc(title)}</div>
+            <div class="trow"><div class="name">${esc(title)}</div>${this._chip(s, days, icon)}</div>
             ${sub ? `<div class="sub">${esc(sub)}</div>` : ""}
             ${status}
           </div>
