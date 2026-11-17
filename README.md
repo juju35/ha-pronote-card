@@ -250,6 +250,12 @@ The lesson going on or the next one, the changes still to come and the homework 
 | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card.png" alt="mini card" width="380"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-dark.png" alt="mini card dark" width="380"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-students.png" alt="mini card with two students" width="380"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-students-dark.png" alt="mini card with two students dark" width="380"> |
 
+Expanded by its detail button: the full card.
+
+| Light | Dark |
+|---|---|
+| <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-zoom.png" alt="mini card expanded" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-zoom-dark.png" alt="mini card expanded, dark" width="400"> |
+
 ### Sidebar panel
 
 | Light | Dark |

@@ -8,6 +8,9 @@
 - **Night version** of the illustration, following `sun.sun` (else the dark theme); `illustration_theme: day | night` forces one. `illustration: false` keeps the classic header with its status chip. Both options are in the visual editors, translated into the 22 languages. Animations stop under `prefers-reduced-motion`.
 - The **status pill** is back in the illustrated header, right after the title and in the colour of the header icon (canceled lesson, changed lesson, homework to do, all done, unavailable); on a narrow card it moves under the subtitle, then shows only its dot. The mini card's detail button sits in the top-right corner of the banner in the frosted round style of the other cards.
 
+### Documentation
+- README: screenshots of the mini card expanded to the full card, light and dark.
+
 ## 1.2.1 - 2026-11-14
 
 ### Fixes

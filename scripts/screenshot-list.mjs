@@ -22,6 +22,8 @@ export const shots = [
   ...both("card-school-life", "pronote-card", 460, { ...ALEX, collapsed: [] }, { clicks: ['[data-action="tab"][data-tab="school_life"]'] }),
   ...both("mini-card", "pronote-mini-card", 380, ALEX),
   ...both("mini-card-students", "pronote-mini-card", 380, {}, { clicks: ['[data-action="student"][data-id="pronote_sam"]'] }),
+  // The mini card expanded by its detail button: the full card, at the full card's width.
+  ...both("mini-card-zoom", "pronote-mini-card", 460, ALEX, { clicks: ['[data-action="zoom"]'] }),
   // The optional sidebar panel (its Today and Grades tabs), within the 1000 px viewport.
   ...both("panel", "pronote-panel", 960),
   ...both("panel-grades", "pronote-panel", 960, ALEX, { clicks: ['[data-action="tab"][data-tab="grades"]'] }),
