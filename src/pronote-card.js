@@ -741,7 +741,7 @@ const BANNER_STYLE = `
   /* Status pill right after the title, vertically centred on it; the title ellipsises first (≥ 4 characters). */
   .trow { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .htext { container: pc-head / inline-size; }
-  .trow .name { flex: 0 1 auto; min-width: 5ch; }
+  .trow .name { flex: 0 1 auto; min-width: 0; }
   .banner .chip { flex: none; max-width: calc(100% - 5ch - 8px); line-height: 16px;
                   background: color-mix(in srgb, var(--c) 18%, rgba(255,255,255,.78)); color: color-mix(in srgb, var(--c) 45%, #0d2a45); }
   .banner.night .chip { background: color-mix(in srgb, var(--c) 30%, rgba(8,18,38,.55)); color: color-mix(in srgb, var(--c) 35%, #ffffff); }
