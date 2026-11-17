@@ -784,12 +784,12 @@ const BANNER_STYLE = `
   @container (max-width: 260px) { .pc-desk { display: none; } .htext, .zoomable .htext { right: 40px; } }
 `;
 
-// Night picture: forced by illustration_theme, else the sun below the horizon, else Home Assistant's dark mode.
+// Night picture: forced by illustration_theme, else the sun below the horizon or Home Assistant's dark theme (dark mode alone without a valid sun.sun).
 const isNight = (hass, config) => {
   if (config.illustration_theme === "night") return true;
   if (config.illustration_theme === "day") return false;
   const sun = hass?.states?.["sun.sun"];
-  if (valid(sun)) return sun.state === "below_horizon";
+  if (valid(sun)) return sun.state === "below_horizon" || !!hass?.themes?.darkMode;
   return !!hass?.themes?.darkMode;
 };
 let bannerUid = 0;
