@@ -320,7 +320,19 @@ const BASE_STYLE = `
   .type-icon .icon { width: 24px; height: 24px; fill: var(--pc-accent); transition: fill .3s ease; }
   .type-icon:is(.ok, .warn, .crit, .idle, .active) .icon { fill: color-mix(in srgb, var(--pc-tint) 60%, var(--primary-text-color)); }
   .titles { flex: 1 1 0; min-width: 5ch; }
-  :host([hide-title]) .titles > .name, :host([hide-subtitle]) .titles > .sub { display: none; }
+  :host([hide-title]) .titles .name, :host([hide-subtitle]) .titles > .sub { display: none; }
+  /* Title row (both headers): the name, then the status pill right after it, only when the whole name and the whole
+     label fit there (measured by the card, see _fitPill); else the pill takes a line of its own under the subtitle
+     (the subtitle kept to one line), and when even that does not fit, only its dot stays (its label in its title). */
+  .trow { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .trow > .name { flex: 0 1 auto; min-width: 4ch; }
+  .trow > .chip { flex: none; max-width: none; }
+  .titles.below { display: flex; flex-direction: column; }
+  .titles.below .trow { display: contents; }
+  .titles.below .trow > .chip { order: 9; align-self: flex-start; max-width: 100%; margin-top: 2px; }
+  .titles.dot-only .trow > .chip { padding: 4px; }
+  .titles.dot-only .trow > .chip .chip-text { display: none; }
+  @container (max-width: 200px) { .trow > .chip { padding: 4px; } .trow > .chip .chip-text { display: none; } }
   .name { font-size: 16px; font-weight: 500; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .warning { padding: 16px; color: color-mix(in srgb, var(--pc-warn) 50%, var(--primary-text-color)); }
@@ -407,8 +419,6 @@ const BASE_STYLE = `
     .narrow-hide { display: none; }
   }
   @container (max-width: 230px) {
-    .header .chip { padding: 4px; flex: none; }
-    .header .chip-text { display: none; }
     .lesson .meta { flex-direction: column; gap: 0; }
   }
 `;
@@ -713,7 +723,7 @@ const deskSvg = (state, uid, stamp = "", count = 0) => {
 };
 
 const BANNER_STYLE = `
-  .banner { position: relative; overflow: hidden; height: 90px; color: #2b2118; background: #fdf3e7; }
+  .banner { position: relative; overflow: hidden; height: 90px; --g: 10px; color: #2b2118; background: #fdf3e7; }
   .banner.night { color: #fff; background: #2a2a36; }
   .pc-desk { position: absolute; right: 0; bottom: 10px; height: 80px; width: min(200px, 62%); overflow: visible; }
   .pc-ground { position: absolute; left: 0; right: 0; bottom: 0; height: 10px;
@@ -738,23 +748,8 @@ const BANNER_STYLE = `
   .banner .type-icon .icon, .banner .type-icon:is(.ok, .warn, .crit, .idle, .active) .icon { fill: color-mix(in srgb, var(--pc-tint) 82%, #000); }
   .banner.night .type-icon { background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.14); }
   .banner.night .type-icon .icon, .banner.night .type-icon:is(.ok, .warn, .crit, .idle, .active) .icon { fill: color-mix(in srgb, var(--pc-tint) 72%, #fff); }
-  /* Status pill right after the title, vertically centred on it; the title ellipsises first (≥ 4 characters). */
-  .trow { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .htext { container: pc-head / inline-size; }
-  .trow .name { flex: 0 1 auto; min-width: 0; }
-  .banner .chip { flex: none; max-width: calc(100% - 56px); line-height: 16px;
-                  background: color-mix(in srgb, var(--c) 18%, rgba(255,255,255,.78)); color: color-mix(in srgb, var(--c) 45%, #0d2a45); }
+  .banner .chip { line-height: 16px; background: color-mix(in srgb, var(--c) 18%, rgba(255,255,255,.78)); color: color-mix(in srgb, var(--c) 45%, #0d2a45); }
   .banner.night .chip { background: color-mix(in srgb, var(--c) 30%, rgba(8,18,38,.55)); color: color-mix(in srgb, var(--c) 35%, #ffffff); }
-  /* Narrow header text (≈ ≤ 260 px card, or the desk beside it): the pill on its own line under the subtitle;
-     very narrow (≈ ≤ 200 px card): the dot alone, the label kept in its title and aria-label. */
-  @container pc-head (max-width: 215px) {
-    .htext .titles { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: start; }
-    .htext .titles > :is(.sub, .status) { justify-self: stretch; }
-    .trow { display: contents; }
-    .trow .name { max-width: 100%; }
-    .banner .chip { order: 9; max-width: 100%; margin-top: 2px; }
-  }
-  @container pc-head (max-width: 150px) { .banner .chip { padding: 4px; } .banner .chip .chip-text { display: none; } }
   .banner .zoom { position: absolute; z-index: 2; top: 5px; right: 5px; margin: 0; display: grid; place-items: center; color: #33506b;
                   background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(255,255,255,.7); backdrop-filter: blur(4px); }
   .banner .zoom:hover { background: rgba(255,255,255,.75); color: #33506b; }
@@ -900,6 +895,18 @@ class PronoteBase extends HTMLElement {
     this._outside ??= watchOutside(this, (ev) => this._onOutside(ev));
     this._outside.on();
     if (this._popup) window.addEventListener("keydown", this._onKey);
+    // A new width (or the web font loaded): the status pill is fitted again, in the next frame.
+    if (typeof ResizeObserver === "function") {
+      this._resize ??= new ResizeObserver((entries) => {
+        const w = Math.round(entries.at(-1).contentRect.width);
+        if (w === this._fitWidth) return;
+        this._fitWidth = w;
+        cancelAnimationFrame(this._fitFrame);
+        this._fitFrame = requestAnimationFrame(() => this._fitPill());
+      });
+      this._resize.observe(this);
+    }
+    document.fonts?.ready?.then(() => this._fitPill());
     // Back on the page after leaving it: rendered again in its default state.
     this._update();
     clearInterval(this._tick);
@@ -912,6 +919,8 @@ class PronoteBase extends HTMLElement {
     clearInterval(this._tick);
     this._tick = null;
     this._outside?.off();
+    this._resize?.disconnect();
+    this._fitWidth = null;
     window.removeEventListener("keydown", this._onKey);
     this._pressing = false;
     window.removeEventListener("pointerup", this._onPressEnd, true);
@@ -962,8 +971,50 @@ class PronoteBase extends HTMLElement {
     const kept = this._popup || this._byPointer ? null : this._focusedSpot();
     this._html = html;
     this.shadowRoot.innerHTML = html;
+    this._fitPill();
     if (kept) this._restoreFocus(kept);
     if (this._popup) this.shadowRoot.querySelector('.modal [data-action="popup_close"]')?.focus?.({ preventScroll: true });
+  }
+
+  // The status pill goes right after the title only when the whole title and the whole label fit there; otherwise it
+  // takes a line of its own under the subtitle (.below, the subtitle kept to one line, its whole text in its tooltip).
+  // When the label does not fit that line either, or the banner has no room for the lines above its ground strip, the
+  // pill keeps its dot only (.dot-only, back beside the title when the dot fits there). Measured after render, so that
+  // it holds in every language.
+  _fitPill() {
+    const root = this.shadowRoot;
+    if (!root?.querySelectorAll || typeof getComputedStyle !== "function") return;
+    for (const t of root.querySelectorAll(".titles")) {
+      const chip = t.querySelector(".trow > .chip");
+      t.classList.remove("below", "dot-only");
+      if (!chip?.getClientRects().length) continue;
+      const row = chip.parentElement;
+      const name = row.querySelector(".name");
+      const fits = () => {
+        let title = 0;
+        if (name && getComputedStyle(name).display !== "none") {
+          const range = document.createRange();
+          range.selectNodeContents(name);
+          const cs = getComputedStyle(name);
+          title = Math.max(name.scrollWidth, range.getBoundingClientRect().width) + (parseFloat(cs.marginLeft) || 0) + (parseFloat(cs.marginRight) || 0) +
+            (parseFloat(getComputedStyle(row).columnGap) || 0);
+        }
+        return title + chip.getBoundingClientRect().width <= row.getBoundingClientRect().width + 0.5;
+      };
+      if (fits()) continue;
+      t.classList.add("below");
+      for (const sub of t.querySelectorAll(".sub, .status")) sub.title = sub.scrollWidth > sub.clientWidth ? sub.textContent.trim() : "";
+      const text = chip.querySelector(".chip-text");
+      const banner = t.closest(".banner");
+      const tb = t.getBoundingClientRect();
+      const bb = banner?.getBoundingClientRect();
+      const ground = banner ? parseFloat(getComputedStyle(banner).getPropertyValue("--g")) || 0 : 0;
+      const tall = !!bb && (tb.top < bb.top - 0.5 || tb.bottom > bb.bottom - ground + 0.5);
+      if (!tall && !(text && text.scrollWidth > text.clientWidth + 0.5)) continue;
+      t.classList.add("dot-only");
+      t.classList.remove("below");
+      if (!fits()) t.classList.add("below");
+    }
   }
 
   // The focused element, as what finds it again in the next render (its tag, data attributes and rank).
@@ -1225,10 +1276,9 @@ class PronoteBase extends HTMLElement {
       <div class="header">
         <div class="type-icon${state ? ` ${state}` : ""}">${svgIcon("school")}</div>
         <div class="titles">
-          <div class="name">${esc(title)}</div>
+          <div class="trow"><div class="name">${esc(title)}</div>${this._chip(s, days, state)}</div>
           ${sub ? `<div class="sub">${esc(sub)}</div>` : ""}
         </div>
-        ${this._chip(s, days, state)}
         ${this._zoomButton()}
       </div>`;
   }
