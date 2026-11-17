@@ -24,7 +24,7 @@ The cards work on top of the community [Pronote integration](https://github.com/
 
 - Two cards: a full **Pronote Card** (`custom:pronote-card`) and a compact **Pronote Mini Card** (`custom:pronote-mini-card`)
 - **Several students** (one Pronote account each, parent accounts included): one text tab per student, the header naming the one shown; or pick them with `device` / `devices`
-- Header icon in a tinted round badge, red when a lesson of the day is canceled, orange when one has changed; status chip with the homework still to do
+- **Illustrated header** (90 px, full and mini card): a desk with the school bag and a pile of exercise books, following the student's day — homework to do (the pen writes on the sheet), a new grade (the teacher's stamp lands on the test paper), unread school information (an envelope with its count), homework done (a green check) or no homework (books closed, pencil at rest) — over a parquet strip, in day and night versions (night when `sun.sun` is below the horizon or the theme is dark; `illustration_theme` forces one). The round header icon takes the colour of the status: red when a lesson of the day is canceled, orange when one has changed, the accent while there is something to do, green when the homework is done, grey when there is none. `illustration: false` brings back the classic header with its status chip
 - Animated picture of the school, following the day: lesson going on, lesson canceled, homework to do, homework done (see [Animations](#animations)); beside it the lesson going on or the next one, the canceled and changed lessons still to come and the homework for the next school day
 - **Timetable** tab: today and the next school day, the lesson going on with a pulsing dot and its progress, past lessons dimmed, **canceled lessons struck through in red**, **changed lessons in orange** with Pronote's own status ("Teacher absent", "Room changed"…), tests, outings and detentions tagged, the lunch break between the morning and the afternoon, rooms and teachers
 - **Homework** tab: grouped by due day, a check circle for the homework done and an empty one for the homework to do, the subject in its Pronote color; a click opens the full text and the attachments in a popup at the top of the card
@@ -114,6 +114,8 @@ tabs:
   - grades
   - school_life
 default_tab: timetable
+illustration: true
+illustration_theme: auto
 show_title: true
 show_subtitle: true
 show_picture: true
@@ -149,6 +151,8 @@ language: fr
 | `device` | both | All students | One student: its name (the nickname set in the integration, its full name, or the device name `Pronote - …`) or its device id |
 | `devices` | both | All students | Several students, in the order of their tabs (set by the visual editor of the full card) |
 | `title` | both | Student name | Card title, when the card shows one student |
+| `illustration` | both | `true` | Illustrated header (desk scene following the homework, grades and school information, with the status on the wall); `false` shows the classic header with the status chip |
+| `illustration_theme` | both | `auto` | Day or night version of the illustration: `auto` (night when `sun.sun` is below the horizon or the dark theme is on, even with the sun up), `day` or `night` |
 | `show_title` | both | `true` | Show the title in the header (e.g. `false` under a section heading of your own) |
 | `show_subtitle` | both | `true` | Show the class and the school under the title |
 | `show_picture` | both | `true` | Show the animated picture of the school |
@@ -245,6 +249,12 @@ The lesson going on or the next one, the changes still to come and the homework 
 |---|---|
 | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card.png" alt="mini card" width="380"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-dark.png" alt="mini card dark" width="380"> |
 | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-students.png" alt="mini card with two students" width="380"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-students-dark.png" alt="mini card with two students dark" width="380"> |
+
+Expanded by its detail button: the full card.
+
+| Light | Dark |
+|---|---|
+| <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-zoom.png" alt="mini card expanded" width="400"> | <img src="https://raw.githubusercontent.com/juju35/ha-pronote-card/main/screenshots/mini-card-zoom-dark.png" alt="mini card expanded, dark" width="400"> |
 
 ### Sidebar panel
 

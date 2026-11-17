@@ -361,10 +361,86 @@ test("a value click opens Home Assistant's more-info", () => {
   assert.equal(card.events.at(-1).detail.entityId, "sensor.pronote_alex_moreau_grades");
 });
 
-test("an unavailable homework sensor shows a grey chip", () => {
+test("an unavailable homework sensor shows a grey chip (classic header)", () => {
   const id = "sensor.pronote_alex_moreau_homework";
-  const out = html(render(pc.PronoteCard, { device: "Alex Moreau" }, makeHass({ [id]: { entity_id: id, state: "unavailable", attributes: {} } })));
+  const out = html(render(pc.PronoteCard, { device: "Alex Moreau", illustration: false }, makeHass({ [id]: { entity_id: id, state: "unavailable", attributes: {} } })));
   assert.match(out, /chip clickable idle[^>]*title="Unavailable"/);
+  assert.doesNotMatch(out, /class="banner/);
+});
+
+// ── Illustrated header ──
+const ALEX = { device: "Alex Moreau" };
+const HW = "sensor.pronote_alex_moreau_homework";
+const GRADES = "sensor.pronote_alex_moreau_grades";
+const INFO = "sensor.pronote_alex_moreau_information_and_surveys";
+const withAttr = (id, attrs) => ({ [id]: { ...states[id], attributes: { ...states[id].attributes, ...attrs } } });
+const noHomework = withAttr(HW, { homework: [] });
+const noUnread = withAttr(INFO, { information_and_surveys: [] });
+const banner = (out) => out.match(/<div class="banner[\s\S]*?<\/svg>[\s\S]*?<div class="type-icon[^"]*"/)[0];
+
+test("the illustrated header shows homework to do: the pen writes, the icon in the accent colour", () => {
+  for (const Card of [pc.PronoteCard, pc.PronoteMiniCard]) {
+    const out = html(render(Card, ALEX, makeHass(homeworkToDo)));
+    assert.match(out, /<svg class="pc-desk homework"/);
+    assert.match(out, /class="pen"/);
+    assert.match(out, /<div class="pc-ground"/);
+    assert.match(banner(out), /<div class="type-icon"$/);
+    assert.match(out, /class="status clickable"[^>]*data-entity="sensor.pronote_alex_moreau_homework"[^>]*>Tomorrow: \d homework to do</);
+  }
+});
+
+test("the illustrated header shows a grade of the last days stamped on the paper", () => {
+  const g = { date: "2026-11-16", subject: "Mathematics", grade: "16", out_of: "20" };
+  const out = html(render(pc.PronoteCard, ALEX, makeHass({ ...homeworkDone, ...withAttr(GRADES, { grades: [g] }) })));
+  assert.match(out, /<svg class="pc-desk grade"/);
+  assert.match(out, /class="stamp"[\s\S]*?>16<\/text>/);
+  assert.match(out, />New grade · 16\/20</);
+});
+
+test("the illustrated header shows unread school information, then done and no homework", () => {
+  let out = html(render(pc.PronoteCard, ALEX, makeHass({ ...homeworkDone })));
+  assert.match(out, /<svg class="pc-desk message"/);
+  assert.match(out, />Information · 1 unread</);
+  out = html(render(pc.PronoteCard, ALEX, makeHass({ ...homeworkDone, ...noUnread })));
+  assert.match(out, /<svg class="pc-desk done"/);
+  assert.match(banner(out), /type-icon ok"$/);
+  out = html(render(pc.PronoteCard, ALEX, makeHass({ ...homeworkToDo, ...noHomework, ...noUnread })));
+  assert.match(out, /<svg class="pc-desk none"/);
+  assert.match(banner(out), /type-icon idle"$/);
+  assert.match(out, />Tomorrow: no homework</);
+});
+
+test("the header icon turns red on a canceled lesson whatever the picture", () => {
+  const out = html(render(pc.PronoteCard, ALEX, makeHass(canceled)));
+  assert.match(banner(out), /type-icon crit"$/);
+});
+
+test("the illustrated header has the status pill on the title row, in the colour of the icon", () => {
+  const pill = (over) => html(render(pc.PronoteMiniCard, ALEX, makeHass(over))).match(/<div class="trow"><div class="name">[^<]*<\/div><span class="chip clickable ([a-z]+)"[^>]*title="([^"]*)"/);
+  assert.deepEqual(pill(canceled).slice(1), ["crit", "Canceled"]);
+  assert.deepEqual(pill(homeworkToDo).slice(1), ["accent", "3 to do"]);
+  assert.deepEqual(pill({ ...homeworkDone, ...noUnread }).slice(1), ["ok", "1 to do"]);
+  assert.deepEqual(pill({ [HW]: { ...states[HW], state: "unavailable" } }).slice(1), ["idle", "Unavailable"]);
+});
+
+test("night: illustration_theme first, then the sun below the horizon or the dark theme (even with the sun up)", () => {
+  const sun = (state) => ({ "sun.sun": { entity_id: "sun.sun", state, attributes: {} } });
+  const night = (config, over, extra) => /class="banner night"/.test(html(render(pc.PronoteCard, { ...ALEX, ...config }, makeHass(over, extra))));
+  assert.equal(night({}, {}), false);
+  assert.equal(night({}, {}, { themes: { darkMode: true } }), true);
+  assert.equal(night({}, sun("below_horizon")), true);
+  assert.equal(night({}, sun("above_horizon"), { themes: { darkMode: true } }), true);
+  assert.equal(night({}, sun("above_horizon"), { themes: { darkMode: false } }), false);
+  assert.equal(night({}, sun("unavailable"), { themes: { darkMode: true } }), true);
+  assert.equal(night({ illustration_theme: "day" }, sun("above_horizon"), { themes: { darkMode: true } }), false);
+  assert.equal(night({ illustration_theme: "night" }, sun("above_horizon"), { themes: { darkMode: false } }), true);
+  assert.equal(night({ illustration_theme: "night" }, sun("above_horizon")), true);
+  assert.equal(night({ illustration_theme: "day" }, sun("below_horizon")), false);
+});
+
+test("each card has its own SVG ids", () => {
+  const ids = [render(pc.PronoteCard, ALEX), render(pc.PronoteMiniCard, ALEX)].map((c) => html(c).match(/id="(pc-bag-\d+)"/)[1]);
+  assert.notEqual(ids[0], ids[1]);
 });
 
 test("the card is translated, numbers and dates in the card's language", () => {

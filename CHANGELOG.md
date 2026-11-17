@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.3.0 - 2026-11-17
+
+### Features
+- **Illustrated header** on the full and the mini card (90 px): the title on a warm wall at the left, a desk at the right with the school bag and a pile of exercise books, and a 10 px parquet strip under the whole banner. The desk follows the student's day: homework to do for the next school day (the pen writes on the sheet), a grade of the last three days (the teacher's stamp lands on the test paper, with the grade), unread school information (an envelope with its count), homework done (a green check is drawn, sparkles twinkle) or no homework (books closed, the pencil at rest). The status line under the title says it and opens the matching sensor.
+- The header icon always takes the colour of the status: red when a lesson of the day is canceled, orange when one has changed, the accent while there is something to do or a lesson is going on, green when the homework is done, grey when there is none.
+- **Night version** of the illustration, after sunset (`sun.sun`) or with the dark theme; `illustration_theme: day | night` forces one. `illustration: false` keeps the classic header with its status chip. Both options are in the visual editors, translated into the 22 languages. Animations stop under `prefers-reduced-motion`.
+- The **status pill** is back in the illustrated header, in the colour of the header icon (canceled lesson, changed lesson, homework to do, all done, unavailable), right after the title only when the whole title and its whole label fit there (the title is never cut for it), else on a line of its own under the subtitle (kept to one line); when even that does not fit in the header, and on cards 200 px wide or less, only its dot stays. Measured on the rendered header, so it holds in every language, in both headers. The mini card's detail button sits in the top-right corner of the banner in the frosted round style of the other cards.
+- Night picture with the dark theme even while the sun is up (it used to wait for sunset when `sun.sun` exists).
+
+### Documentation
+- README: screenshots of the mini card expanded to the full card, light and dark.
+
 ## 1.2.1 - 2026-11-14
 
 ### Fixes
