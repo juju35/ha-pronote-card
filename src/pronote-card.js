@@ -779,12 +779,11 @@ const BANNER_STYLE = `
   @container (max-width: 260px) { .pc-desk { display: none; } .htext, .zoomable .htext { right: 40px; } }
 `;
 
-// Night picture: forced by illustration_theme, else the sun below the horizon or Home Assistant's dark theme (dark mode alone without a valid sun.sun).
+// Night picture: forced by illustration_theme, else Home Assistant's dark theme alone (a light theme keeps the day
+// picture after sunset).
 const isNight = (hass, config) => {
   if (config.illustration_theme === "night") return true;
   if (config.illustration_theme === "day") return false;
-  const sun = hass?.states?.["sun.sun"];
-  if (valid(sun)) return sun.state === "below_horizon" || !!hass?.themes?.darkMode;
   return !!hass?.themes?.darkMode;
 };
 let bannerUid = 0;
@@ -881,7 +880,7 @@ class PronoteBase extends HTMLElement {
     const { students } = findStudents(h, this._config);
     if (!students) return null;
     const ids = students.flatMap((s) => [...Object.values(s.entities), ...Object.values(s.periods || {}).flatMap((p) => Object.values(p))]);
-    return [h.entities, h.devices, h.language, h.locale, h.themes?.darkMode, h.states["sun.sun"], Math.floor(now() / 60000), ...ids.map((id) => h.states[id])];
+    return [h.entities, h.devices, h.language, h.locale, h.themes?.darkMode, Math.floor(now() / 60000), ...ids.map((id) => h.states[id])];
   }
 
   // A click elsewhere on the page folds the sections back to their defaults and closes the popup.

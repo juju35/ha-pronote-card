@@ -423,12 +423,12 @@ test("the illustrated header has the status pill on the title row, in the colour
   assert.deepEqual(pill({ [HW]: { ...states[HW], state: "unavailable" } }).slice(1), ["idle", "Unavailable"]);
 });
 
-test("night: illustration_theme first, then the sun below the horizon or the dark theme (even with the sun up)", () => {
+test("night: illustration_theme first, then the dark theme alone (a light theme stays day after sunset)", () => {
   const sun = (state) => ({ "sun.sun": { entity_id: "sun.sun", state, attributes: {} } });
   const night = (config, over, extra) => /class="banner night"/.test(html(render(pc.PronoteCard, { ...ALEX, ...config }, makeHass(over, extra))));
   assert.equal(night({}, {}), false);
   assert.equal(night({}, {}, { themes: { darkMode: true } }), true);
-  assert.equal(night({}, sun("below_horizon")), true);
+  assert.equal(night({}, sun("below_horizon")), false, "light theme after sunset: day");
   assert.equal(night({}, sun("above_horizon"), { themes: { darkMode: true } }), true);
   assert.equal(night({}, sun("above_horizon"), { themes: { darkMode: false } }), false);
   assert.equal(night({}, sun("unavailable"), { themes: { darkMode: true } }), true);
