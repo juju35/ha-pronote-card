@@ -5,7 +5,12 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { NOW } from "../scripts/mock-states.mjs";
 
-const source = ["i18n.js", "pronote-card.js", "pronote-panel.js"].map((f) => readFileSync(new URL(`../src/${f}`, import.meta.url), "utf8")).join("\n");
+// One script per source file, run in order in the same context (their const/class share its global lexical scope, as in
+// the bundle): each keeps its file name, so that `node --test --experimental-test-coverage` reports the sources.
+const sources = ["i18n.js", "pronote-card.js", "pronote-panel.js"].map((f) => {
+  const url = new URL(`../src/${f}`, import.meta.url);
+  return { code: readFileSync(url, "utf8"), filename: url.pathname };
+});
 
 const fakeRoot = () => ({
   innerHTML: "",
@@ -81,7 +86,7 @@ export const load = ({ now = NOW } = {}) => {
   sandbox.removeEventListener = () => {};
   sandbox.window = sandbox;
   vm.createContext(sandbox);
-  vm.runInContext(source, sandbox);
+  for (const { code, filename } of sources) vm.runInContext(code, sandbox, { filename });
   return { ...exportsOf(sandbox), setNow: FrozenDate.setNow };
 };
 
