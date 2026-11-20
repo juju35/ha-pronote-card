@@ -5,38 +5,36 @@
 // and the panel draws its own page (it does not embed the cards). The tab is in the address
 // (`/pronote/homework`), the student shown is remembered in the browser.
 
-// The logo: the cards' school glyph, white on a tile in the accent color, with an "A+" badge (also brand/icon.svg).
-const PANEL_LOGO = `<svg viewBox="0 0 256 256" aria-hidden="true">
-  <rect x="8" y="8" width="240" height="240" rx="56" fill="${ACCENTS[0]}"/>
-  <path d="M128 64L40 106l88 42 88-42z" fill="#fff"/>
-  <path d="M80 126v34c0 16 22 28 48 28s48-12 48-28v-34l-48 23z" fill="#fff"/>
-  <path d="M206 110v44" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
-  <circle cx="192" cy="192" r="40" fill="#EF9F27" stroke="${ACCENTS[0]}" stroke-width="8"/>
-  <path d="M168 210l12-34 12 34M173 198h14M206 184v24M194 196h24" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
-
 const PANEL_TABS = ["today", ...TABS];
 const STUDENT_KEY = "pronote-panel-student";
 
 const PANEL_STYLE = `
   :host { display: block; min-height: 100%; background: var(--primary-background-color); color: var(--primary-text-color); --pc-natural-width: auto; }
   :host::before { display: none; }
-  .toolbar { display: flex; align-items: center; gap: 8px; height: var(--header-height, 56px); padding: 0 12px; box-sizing: border-box;
-             background: var(--app-header-background-color, var(--primary-background-color));
-             color: var(--app-header-text-color, var(--primary-text-color)); }
-  .toolbar .ptitle { font-size: 20px; font-weight: 400; flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .toolbar .who { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
-  .toolbar .who .btn[aria-pressed="true"] { color: var(--pc-accent-text); border-color: color-mix(in srgb, var(--pc-accent) 55%, transparent);
-                                            background: color-mix(in srgb, var(--pc-accent) 10%, transparent); }
-  .tabs.sections { padding: 0 12px; background: var(--app-header-background-color, var(--primary-background-color)); }
+  /* The top bar: the cards' illustrated banner across the page (wall, desk, parquet), the student shown as its title,
+     the students as a segmented choice under the subtitle, round glass buttons at the right; the text tabs under it. */
+  .pbar { container-type: inline-size; flex: none; }
+  .pbar ha-menu-button { flex: none; margin: 0 -6px 0 -4px; color: inherit; }
+  .pbar .pc-desk { right: 44px; width: min(200px, calc(62% - 44px)); }
+  .pbar .htext { left: 4px; right: calc(min(200px, calc(62% - 44px)) * .52 + 44px); }
+  @container (max-width: 340px) { .pbar .pc-desk { display: none; } .pbar .htext { right: 48px; } }
+  .pbar .rbtns { position: absolute; z-index: 2; right: 8px; top: 8px; display: flex; gap: 6px; }
+  .rbtn { all: unset; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; flex: none;
+          color: #33506b; background: rgba(255,255,255,.55); box-shadow: inset 0 0 0 1px rgba(255,255,255,.7); backdrop-filter: blur(4px); }
+  .rbtn:hover { background: rgba(255,255,255,.75); }
+  .rbtn .icon { width: 18px; height: 18px; }
+  .night .rbtn { color: #fff; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+  .night .rbtn:hover { background: rgba(255,255,255,.22); }
+  .seg { display: inline-flex; gap: 2px; margin-top: 3px; padding: 2px; border-radius: 12px; background: rgba(255,255,255,.5); align-self: flex-start;
+         max-width: 100%; overflow-x: auto; scrollbar-width: none; box-sizing: border-box; }
+  .seg::-webkit-scrollbar { display: none; }
+  .night .seg { background: rgba(255,255,255,.1); }
+  .seg button { all: unset; font-size: 11px; line-height: 16px; padding: 1px 9px; border-radius: 10px; cursor: pointer; white-space: nowrap; flex: none; }
+  .seg button[aria-pressed="true"] { background: rgba(255,255,255,.85); color: ${ACCENTS[0]}; font-weight: 600; }
+  .night .seg button[aria-pressed="true"] { background: rgba(255,255,255,.2); color: #fff; }
+  .tabs.sections { padding: 0 12px; background: var(--card-background-color); }
   .tabs.sections .tab { font-size: 14px; padding: 10px 10px 9px; }
   main { padding: 16px; max-width: 1400px; margin: 0 auto; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px; }
-  .welcome { display: flex; align-items: center; gap: 14px; }
-  .welcome .logo { width: 56px; height: 56px; flex: none; }
-  .welcome .logo svg { width: 100%; height: 100%; display: block; }
-  .welcome .titles .name { font-size: 22px; }
-  .welcome .titles .sub { font-size: 13px; white-space: normal; }
-  .welcome .chip { max-width: 40%; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; align-items: start; }
   .pane { overflow: visible; }
   .pane-title { display: flex; align-items: center; gap: 8px; padding: 12px 12px 0; font-size: 15px; font-weight: 500; }
@@ -47,14 +45,12 @@ const PANEL_STYLE = `
   .content.cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-items: start; }
   .content.cols > :is(.summary, .tiles, .overall, .empty, .periodbar) { grid-column: 1 / -1; }
   .section-title.static { cursor: default; }
-  .page > .backdrop { position: fixed; padding-top: calc(var(--header-height, 56px) + 16px); }
-  .page > .backdrop .modal { max-height: calc(100% - var(--header-height, 56px) - 32px); }
+  .page > .backdrop { position: fixed; padding-top: 106px; }
+  .page > .backdrop .modal { max-height: calc(100% - 122px); }
   @media (max-width: 600px) {
     main { padding: 8px; gap: 8px; }
     .grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
     .content.cols { grid-template-columns: minmax(0, 1fr); }
-    .welcome .logo { width: 44px; height: 44px; }
-    .welcome .titles .name { font-size: 18px; }
   }
 `;
 
@@ -151,6 +147,10 @@ class PronotePanel extends PronoteCard {
       ev.stopPropagation();
       return this._goTab(d.tab);
     }
+    if (!this._popup && d?.action === "refresh") {
+      ev.stopPropagation();
+      return this._refresh();
+    }
     if (!this._popup && d?.action === "student") {
       try {
         localStorage.setItem(STUDENT_KEY, d.id);
@@ -186,17 +186,45 @@ class PronotePanel extends PronoteCard {
     return `<ha-card class="pane"${cls ? ` data-pane="${cls}"` : ""}>${head}<div class="content${cls === "cols" ? " cols" : ""}">${body}</div></ha-card>`;
   }
 
-  _toolbar(s, students) {
-    const who =
+  // Asks the integration for fresh data of the student shown (all its entities share one update).
+  _refresh() {
+    const ctx = this._context();
+    const ids = ctx.error ? [] : Object.values(ctx.s.entities).filter(Boolean);
+    if (ids.length) this._hass.callService("homeassistant", "update_entity", { entity_id: ids });
+  }
+
+  // The top bar (charter: illustrated, full width): the student shown as the title, so that switching student
+  // changes it, the class under it, the students as a segmented choice (first names), a round refresh button.
+  _bar(s, students, days) {
+    const c = this._config;
+    const night = isNight(this._hass, c) ? " night" : "";
+    const menu = "<ha-menu-button></ha-menu-button>";
+    if (!days) {
+      return `<div class="pbar banner${night}">${deskSvg("none", this._uid)}<div class="htext">${menu}<div class="type-icon idle">${svgIcon(
+        "school",
+      )}</div><div class="titles"><div class="trow"><div class="name">${esc(c.title || "Pronote")}</div></div></div></div></div>`;
+    }
+    const b = this._bannerState(s, days);
+    const alert = b.icon === "crit" || b.icon === "warn";
+    const todo = this._homework(s).filter((h) => !h.done).length;
+    const state = alert ? b.icon : s.entities.homework ? (todo ? "active" : "ok") : b.icon;
+    const chip = alert ? this._chip(s, days, b.icon) : this._chip(s);
+    const title = (students.length === 1 && c.title) || studentName(this._hass, s);
+    const sub = this._subtitle(s);
+    const seg =
       students.length > 1
-        ? `<div class="who" role="group" aria-label="${esc(this._t("students"))}">${students
-            .map(
-              (x) =>
-                `<button class="btn" data-action="student" data-id="${esc(x.id)}" aria-pressed="${x === s}">${esc(studentName(this._hass, x))}</button>`,
-            )
+        ? `<div class="seg" role="group" aria-label="${esc(this._t("students"))}">${students
+            .map((x) => {
+              const name = studentName(this._hass, x);
+              return `<button data-action="student" data-id="${esc(x.id)}" aria-pressed="${x === s}" title="${esc(name)}">${esc(name.split(/\s+/)[0] || name)}</button>`;
+            })
             .join("")}</div>`
         : "";
-    return `<div class="toolbar"><ha-menu-button></ha-menu-button><div class="ptitle">${esc(this._config.title || "Pronote")}</div>${who}</div>`;
+    const refresh = esc(this._t("refresh"));
+    return `<div class="pbar banner${night}">${deskSvg(b.scene, this._uid, b.stamp, b.count)}
+      <div class="htext">${menu}<div class="type-icon${state ? ` ${state}` : ""}">${svgIcon("school")}</div><div class="titles">
+        <div class="trow"><div class="name">${esc(title)}</div>${chip}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ""}${seg}</div></div>
+      <div class="rbtns"><button class="rbtn" data-action="refresh" title="${refresh}" aria-label="${refresh}">${svgIcon("refresh")}</button></div></div>`;
   }
 
   _tabBar(tab, s) {
@@ -207,15 +235,6 @@ class PronotePanel extends PronoteCard {
           x === "homework" && todo ? `<span class="badge">${todo}</span>` : ""
         }</button>`,
     ).join("")}</div>`;
-  }
-
-  // The student, the class and the date, with the cards' status chip.
-  _welcome(s) {
-    const date = upperFirst(fmtDate(todayKey(), this._locale(), { weekday: "long", day: "numeric", month: "long" }));
-    const sub = [date, this._subtitle(s)].filter(Boolean).join(" · ");
-    return `<div class="welcome"><div class="logo">${PANEL_LOGO}</div><div class="titles"><div class="name">${esc(studentName(this._hass, s))}</div><div class="sub">${esc(
-      sub,
-    )}</div></div>${this._chip(s)}</div>`;
   }
 
   // Today: the lesson going on or the next one, the timetable, the homework for the next school day, the latest
@@ -241,7 +260,7 @@ class PronotePanel extends PronoteCard {
     }
     if (e.absences || e.delays || e.punishments || e.information) panes.push(this._pane(this._t("school_life"), "life", this._schoolLife(s, { tilesOnly: true })));
     if (e.menus) panes.push(this._pane(this._t("menus"), "food", this._menu(e.menus)));
-    return `${this._welcome(s)}<div class="grid">${panes.join("")}</div>`;
+    return `<div class="grid">${panes.join("")}</div>`;
   }
 
   // Timetable: today and the next school day side by side.
@@ -264,7 +283,7 @@ class PronotePanel extends PronoteCard {
 
   _render() {
     const ctx = this._context();
-    if (ctx.error) return `<style>${BASE_STYLE}${PANEL_STYLE}</style><div class="page">${this._toolbar({}, [])}<main>${ctx.error}</main></div>`;
+    if (ctx.error) return `<style>${BASE_STYLE}${SCENE_STYLE}${BANNER_STYLE}${PANEL_STYLE}</style><div class="page">${this._bar({}, [])}<main>${ctx.error}</main></div>`;
     const { students, s, days } = ctx;
     const tab = PANEL_TABS.includes(this._tab) ? this._tab : PANEL_TABS.includes(this._config.default_tab) ? this._config.default_tab : "today";
     const body = {
@@ -274,9 +293,10 @@ class PronotePanel extends PronoteCard {
       grades: () => this._pane("", "", this._grades(s), { cls: "cols" }),
       school_life: () => this._pane("", "", this._schoolLife(s), { cls: "cols" }),
     }[tab]();
-    return `<style>${BASE_STYLE}${SCENE_STYLE}${FULL_STYLE}${DIALOG_STYLE}${PANEL_STYLE}</style>
-      <div class="page">${this._toolbar(s, students)}${this._tabBar(tab, s)}<main>${body}</main></div>`;
+    return `<style>${BASE_STYLE}${SCENE_STYLE}${FULL_STYLE}${DIALOG_STYLE}${BANNER_STYLE}${PANEL_STYLE}</style>
+      <div class="page">${this._bar(s, students, days)}${this._tabBar(tab, s)}<main>${body}</main></div>`;
   }
 }
 
 define("pronote-panel", PronotePanel);
+
