@@ -40,6 +40,7 @@ const ICONS = {
   star: "M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z",
   average: "M18,6H8.83L14.83,12L8.83,18H18V20H6V18L12,12L6,6V4H18V6Z",
   eval: "M23,12L20.56,9.22L20.9,5.54L17.29,4.72L15.4,1.54L12,3L8.6,1.54L6.71,4.72L3.1,5.53L3.44,9.21L1,12L3.44,14.78L3.1,18.47L6.71,19.29L8.6,22.47L12,21L15.4,22.46L17.29,19.28L20.9,18.46L20.56,14.78L23,12M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z",
+  refresh: "M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z",
   close: "M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z",
   test: "M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H10V20.09L12.09,18H6V16H14.09L16.09,14H6V12H18.09L20,10.09V8L14,2H6M13,3.5L18.5,9H13V3.5M20.15,13C20,13 19.86,13.05 19.75,13.16L18.73,14.18L20.82,16.26L21.84,15.25C22.05,15.03 22.05,14.67 21.84,14.46L20.54,13.16C20.43,13.05 20.29,13 20.15,13M18.14,14.77L12,20.92V23H14.08L20.23,16.85L18.14,14.77Z",
   coffee: "M20,10C22,13 17,22 15,22C13,22 13,21 12,21C11,21 11,22 9,22C7,22 2,13 4,10C6,7 9,7 11,8V5C5.38,8.07 4.11,3.78 4.11,3.78C4.11,3.78 6.77,0.19 11,5V3H13V8C15,7 18,7 20,10Z",
@@ -236,13 +237,19 @@ const resolve = (hass) => {
   const hit = _cache.get(ents);
   if (hit && hit.devices === hass.devices) return hit.students;
   const byDevice = new Map();
+  // A Pronote entity without a role and without its state yet (Home Assistant still loading): its role may come from
+  // the state's attributes (1.x class sensor), so the result is not cached until every state is there.
+  let pending = false;
   for (const e of Object.values(ents)) {
     if (e.platform !== PLATFORM || !e.device_id) continue;
     const state = hass.states?.[e.entity_id];
     // Integration 1.x: the student's own sensor (`sensor.pronote_<student>`) carries the class and the school.
     const role = roleOf(e) ?? (state?.attributes?.class_name !== undefined ? "class" : undefined);
     const period = role ? undefined : periodOf(e, state);
-    if (!role && !period) continue;
+    if (!role && !period) {
+      if (!state) pending = true;
+      continue;
+    }
     let s = byDevice.get(e.device_id);
     if (!s) {
       const d = hass.devices?.[e.device_id] || {};
@@ -253,7 +260,7 @@ const resolve = (hass) => {
     else (s.periods[period.key] ??= {})[period.role] ??= e.entity_id;
   }
   const students = [...byDevice.values()].sort((a, b) => a.deviceName.localeCompare(b.deviceName));
-  _cache.set(ents, { devices: hass.devices, students });
+  if (!pending) _cache.set(ents, { devices: hass.devices, students });
   return students;
 };
 

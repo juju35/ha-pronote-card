@@ -495,6 +495,19 @@ test("integration 1.x: the student's own sensor gives the class and the school",
   assert.match(html(render(pc.PronoteCard, {}, hass)), /5e A · Collège Test/);
 });
 
+test("integration 1.x: the class sensor is found once its state arrives after the registry", () => {
+  const ents = {
+    "sensor.pronote_kim": { entity_id: "sensor.pronote_kim", device_id: "d1", platform: "pronote", translation_key: null },
+    "sensor.pronote_kim_timetable_today": { entity_id: "sensor.pronote_kim_timetable_today", device_id: "d1", platform: "pronote", translation_key: null },
+  };
+  const devices = { d1: { id: "d1", name: "Pronote - Kim" } };
+  const today = { entity_id: "sensor.pronote_kim_timetable_today", state: "0", attributes: { lessons: [] } };
+  const kim = { entity_id: "sensor.pronote_kim", state: "Kim", attributes: { full_name: "Kim", class_name: "5e A" } };
+  assert.equal(pc.resolve({ entities: ents, devices, states: { [today.entity_id]: today } })[0].entities.class, undefined);
+  const later = { entities: ents, devices, states: { [today.entity_id]: today, [kim.entity_id]: kim } };
+  assert.equal(pc.resolve(later)[0].entities.class, "sensor.pronote_kim", "not cached while a state was missing");
+});
+
 test("both cards and their editors are registered, with a stub config and the visual editor", () => {
   assert.deepEqual(plain(pc.PronoteCard.getStubConfig()), {});
   assert.deepEqual(plain(pc.window.customCards.map((c) => c.type)), ["pronote-card", "pronote-mini-card"]);

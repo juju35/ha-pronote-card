@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0 - 2026-11-20
+
+### Features
+- Sidebar panel: **illustrated top bar** (charter of the ha-* panels) in place of Home Assistant's toolbar and the welcome line — the cards' 90 px banner across the page (wall, desk following the student's day, parquet strip; night picture with a dark theme only, `illustration_theme` forces it), the **student shown as the title** (switching student changes it) with the status pill, the class and the school, the students as a segmented choice, a round refresh button (`homeassistant.update_entity` on the student's entities), the text tabs under it on the card background.
+- Sidebar panel: **sidebar badge** with the number of homework still to do of the panel's students, drawn whenever the bundle is loaded (`frontend: extra_module_url` to have it on every page).
+
+### Fixes
+- Integration 1.x: the class sensor is no longer missed when its state arrives after the entity registry (the student list is not cached while a Pronote state is missing).
+- Sidebar panel: no rewrite of the page while it is pressed (the update waits for the release, as on the cards), so that a tap on a tab, a student or a homework is never lost to a state change arriving at the same moment.
+
+### Maintenance
+- Tests: each source file runs as its own script in the test sandbox, so the coverage report measures `src/pronote-card.js`, `src/pronote-panel.js` and `src/i18n.js`.
+
 ## 1.3.1 - 2026-11-18
 
 ### Fixes

@@ -173,7 +173,15 @@ language: fr
 
 ## Sidebar panel (optional)
 
-The same bundle also holds a **Pronote** page for the sidebar. The cards never need it: add it only if you want it. It draws its own full-page layout (it does not embed the cards), with text tabs under the header: **Today** (the student, the lesson going on or the next one, the timetable, the homework for the next school day, the latest grades, the school life counters and the menu), **Timetable** (today and the next school day side by side), **Homework**, **Grades** and **School life** (laid out in columns). The tab is in the address (`/pronote/homework`), and with several students a button per student sits in the header (the one picked is remembered by the browser).
+The same bundle also holds a **Pronote** page for the sidebar. The cards never need it: add it only if you want it. It draws its own full-page layout (it does not embed the cards): an **illustrated top bar** across the page (the cards' 90 px banner — wall, desk following the student's day, parquet strip; the night picture with a dark Home Assistant theme only, `illustration_theme: day|night` forces it) whose title is the **student shown**, with the status pill, the class and the school, the students as a segmented choice (first names) and a round **refresh** button (asks the integration for fresh data of that student), then text tabs: **Today** (the student, the lesson going on or the next one, the timetable, the homework for the next school day, the latest grades, the school life counters and the menu), **Timetable** (today and the next school day side by side), **Homework**, **Grades** and **School life** (laid out in columns). The tab is in the address (`/pronote/homework`), and with several students the segmented choice in the bar switches the student — and the title with it (the one picked is remembered by the browser).
+
+**Sidebar badge**: the panel's sidebar item shows the number of homework still to do (all the panel's students, the same count as the Homework tab badge), like Home Assistant's notifications count. It is drawn whenever the bundle is loaded — the panel or a dashboard with a Pronote card; to have it from the first page you open, also load the bundle on every page:
+
+```yaml
+frontend:
+  extra_module_url:
+    - /local/community/ha-pronote-card/pronote-card.js
+```
 
 Declare it in `configuration.yaml`, pointing at the file the Marketplace installed, then restart Home Assistant:
 
@@ -191,7 +199,7 @@ panel_custom:
       max_grades: 10        # 10 by default on the panel
 ```
 
-`config` takes the options of the full card (`device`, `devices`, `title`, `show_room`, `show_teacher`, `show_canceled`, `show_done_homework`, `show_class_average`, `show_min_max`, `show_coefficient`, `show_periods`, `show_picture`, `max_grades`, `language`), plus `default_tab`, which can also be `today`. Sections are always unfolded on the panel.
+`config` takes the options of the full card (`device`, `devices`, `title`, `show_room`, `show_teacher`, `show_canceled`, `show_done_homework`, `show_class_average`, `show_min_max`, `show_coefficient`, `show_periods`, `show_picture`, `max_grades`, `illustration_theme`, `language`), plus `default_tab`, which can also be `today`. Sections are always unfolded on the panel.
 
 | Today | Grades (dark theme) |
 |---|---|
