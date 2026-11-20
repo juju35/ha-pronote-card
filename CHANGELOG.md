@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.2 - 2026-11-20
+
+### Fixes
+- Sidebar panel: no rewrite of the page while it is pressed (the update waits for the release, as on the cards), so that a tap on a tab, a student or a homework is never lost to a state change arriving at the same moment.
+
+### Maintenance
+- Tests: each source file runs as its own script in the test sandbox, so the coverage report measures `src/pronote-card.js`, `src/pronote-panel.js` and `src/i18n.js`.
+
 ## 1.3.1 - 2026-11-18
 
 ### Fixes
