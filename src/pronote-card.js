@@ -236,13 +236,19 @@ const resolve = (hass) => {
   const hit = _cache.get(ents);
   if (hit && hit.devices === hass.devices) return hit.students;
   const byDevice = new Map();
+  // A Pronote entity without a role and without its state yet (Home Assistant still loading): its role may come from
+  // the state's attributes (1.x class sensor), so the result is not cached until every state is there.
+  let pending = false;
   for (const e of Object.values(ents)) {
     if (e.platform !== PLATFORM || !e.device_id) continue;
     const state = hass.states?.[e.entity_id];
     // Integration 1.x: the student's own sensor (`sensor.pronote_<student>`) carries the class and the school.
     const role = roleOf(e) ?? (state?.attributes?.class_name !== undefined ? "class" : undefined);
     const period = role ? undefined : periodOf(e, state);
-    if (!role && !period) continue;
+    if (!role && !period) {
+      if (!state) pending = true;
+      continue;
+    }
     let s = byDevice.get(e.device_id);
     if (!s) {
       const d = hass.devices?.[e.device_id] || {};
@@ -253,7 +259,7 @@ const resolve = (hass) => {
     else (s.periods[period.key] ??= {})[period.role] ??= e.entity_id;
   }
   const students = [...byDevice.values()].sort((a, b) => a.deviceName.localeCompare(b.deviceName));
-  _cache.set(ents, { devices: hass.devices, students });
+  if (!pending) _cache.set(ents, { devices: hass.devices, students });
   return students;
 };
 
