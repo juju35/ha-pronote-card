@@ -111,6 +111,17 @@ test("the refresh button asks for fresh data of the student shown", () => {
   assert.ok(data.entity_id.length > 3 && data.entity_id.every((id) => id.includes("sam")));
 });
 
+test("the sidebar badge counts the homework not done of the panel's students", () => {
+  assert.equal(pc.pronoteBadgeCount(hass, {}), 4, "3 for Alex, 1 for Sam");
+  assert.equal(pc.pronoteBadgeCount(hass, { device: "Sam Moreau" }), 1);
+  assert.equal(pc.pronoteBadgeCount(hass, { device: "Nobody" }), 0);
+  const panels = { pronote: { component_name: "custom", url_path: "pronote", config: { _panel_custom: { name: "pronote-panel" }, device: "Sam Moreau" } } };
+  const [path, panel] = pc.pronotePanelOf({ panels });
+  assert.equal(path, "pronote");
+  assert.equal(panel.config.device, "Sam Moreau");
+  assert.equal(pc.pronotePanelOf({ panels: { other: { component_name: "custom", config: { _panel_custom: { name: "x" } } } } }), undefined);
+});
+
 test("the panel is not rewritten under a press: the update waits for the release", () => {
   const p = open();
   const before = html(p);

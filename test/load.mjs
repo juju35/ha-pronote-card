@@ -96,6 +96,6 @@ const exportsOf = (sandbox) =>
     `({ STRINGS, esc, lang, intlLocale, parseNum, gradeClass, levelClass, roleOf, resolve, findStudents, studentName, keyOf, addDays, dayLabel, lessonState, sceneSvg,
        periodOf, PronoteCard: customElements.get("pronote-card"), PronoteMiniCard: customElements.get("pronote-mini-card"),
        PronoteCardEditor: customElements.get("pronote-card-editor"), PronoteMiniCardEditor: customElements.get("pronote-mini-card-editor"),
-       PronotePanel: customElements.get("pronote-panel"), window })`,
+       PronotePanel: customElements.get("pronote-panel"), pronoteBadgeCount, pronotePanelOf, window })`,
     sandbox,
   );
