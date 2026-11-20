@@ -75,3 +75,15 @@ test("the panel's logo is the one of brand/icon.svg, in the cards' accent", asyn
   assert.match(svg, /fill="#17795d"/);
   assert.match(readFileSync(new URL("../src/pronote-card.js", import.meta.url), "utf8"), /const ACCENTS = \["#17795d"/);
 });
+
+test("the panel is not rewritten under a press: the update waits for the release", () => {
+  const p = open();
+  const before = html(p);
+  p._pressing = true;
+  p._goTab("grades");
+  assert.equal(html(p), before, "held while pressed");
+  assert.equal(p._dirty, true);
+  p._pressing = false;
+  p._update();
+  assert.match(html(p), /aria-selected="true"><span>Grades</);
+});

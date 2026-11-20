@@ -124,6 +124,12 @@ class PronotePanel extends PronoteCard {
 
   _update() {
     if (!this._hass || !this._config) return;
+    // A press in progress: drawn once released, as on the cards (a rewrite under the pointer would lose the click).
+    if (this._pressing) {
+      this._dirty = true;
+      return;
+    }
+    this._dirty = false;
     this.toggleAttribute?.("dark", !!this._hass.themes?.darkMode);
     let html = this._render();
     const popup = this._popup ? this._popupHtml() : "";
