@@ -2023,7 +2023,7 @@ for (const card of [
   },
 ]) {
   if (!window.customCards.some((c) => c.type === card.type))
-    window.customCards.push({ ...card, preview: true, documentationURL: "https://github.com/juju35/ha-pronote-card" });
+    window.customCards.push({ ...card, preview: false, documentationURL: "https://github.com/juju35/ha-pronote-card" });
 }
 
 console.info(`%c PRONOTE-CARD %c v${VERSION} `, `color: white; background: ${ACCENTS[0]}; font-weight: 700;`, `color: ${ACCENTS[0]}; background: white; font-weight: 700;`);
