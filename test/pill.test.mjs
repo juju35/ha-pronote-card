@@ -4,13 +4,13 @@
 // (only when it could not fit beside the whole title); its label is whole or only its dot shows (always at 190 px);
 // nothing of the title block goes over the banner's ground strip or out of the banner.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { devices, entities, states } from "../scripts/mock-states.mjs";
+import { i18nSource, pronoteCardSource, pronotePanelSource } from "./source.mjs";
 
-const source0 = readFileSync(new URL("../src/i18n.js", import.meta.url), "utf8");
-const source1 = readFileSync(new URL("../src/pronote-card.js", import.meta.url), "utf8");
-const source2 = readFileSync(new URL("../src/pronote-panel.js", import.meta.url), "utf8");
+const source0 = i18nSource;
+const source1 = pronoteCardSource;
+const source2 = pronotePanelSource;
 
 let chromium;
 try {

@@ -29,7 +29,7 @@ export const shots = [
   ...both("panel-grades", "pronote-panel", 960, ALEX, { clicks: ['[data-action="tab"][data-tab="grades"]'] }),
 ];
 
-// One GIF per animated state of the picture (see sceneSvg in src/pronote-card.js).
+// One GIF per animated state of the picture (see sceneSvg in the bundled card source (test/source.mjs)).
 export const gifs = [
   ...both("anim-class", "pronote-mini-card", 380, ALEX, { overrides: inClass }),
   ...both("anim-canceled", "pronote-mini-card", 380, ALEX, { overrides: canceled }),
