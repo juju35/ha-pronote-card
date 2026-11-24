@@ -1,15 +1,15 @@
-// Evaluates src/i18n.js and src/pronote-card.js (classic scripts, bundled as they are by scripts/build.mjs) in a
+// Evaluates the translations, the cards and the panel (test/source.mjs: classic scripts, bundled by scripts/build.mjs) in a
 // sandbox with minimal DOM stand-ins and a clock frozen at `now`, and returns the names the tests need.
 // No dependency, no browser.
-import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { NOW } from "../scripts/mock-states.mjs";
+import { sources as bundles } from "./source.mjs";
 
 // One script per source file, run in order in the same context (their const/class share its global lexical scope, as in
 // the bundle): each keeps its file name, so that `node --test --experimental-test-coverage` reports the sources.
 const sources = ["i18n.js", "pronote-card.js", "pronote-panel.js"].map((f) => {
-  const url = new URL(`../src/${f}`, import.meta.url);
-  return { code: readFileSync(url, "utf8"), filename: url.pathname };
+  const url = new URL(`../src/${f.slice(0, -3)}/index.js`, import.meta.url);
+  return { code: bundles[f], filename: url.pathname };
 });
 
 const fakeRoot = () => ({

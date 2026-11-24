@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.3 - 2026-11-24
+
+### Maintenance
+- The card source is split into ES modules: `src/i18n/` (entry `src/i18n/index.js`), `src/pronote-card/` (entry `src/pronote-card/index.js`), `src/pronote-panel/` (entry `src/pronote-panel/index.js`), cut at its sections, with the translations in one file per language (`i18n/<lang>.js`). `scripts/bundle.mjs` concatenates them back, in their original order, into the same single file and per-language files as before; the tests evaluate that bundle.
+
 ## 1.5.2 - 2026-11-22
 
 ### Performance
