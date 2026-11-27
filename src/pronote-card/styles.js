@@ -3,7 +3,7 @@ import { ACCENTS } from "./core.js";
 
 export const BASE_STYLE = `
   :host { --pc-accent: ${ACCENTS[0]}; --pc-ok: var(--success-color, #43a047); --pc-warn: var(--warning-color, #ffa600);
-          --pc-crit: var(--error-color, #db4437); --pc-idle: var(--disabled-text-color, #9e9e9e); --pc-active: var(--info-color, #039be5);
+          --pc-crit: var(--error-color, #db4437); --pc-idle: var(--secondary-text-color, #9e9e9e); --pc-active: var(--info-color, #039be5);
           /* Text in a state or accent color is mixed with the text color so that it stays readable (4.5:1). */
           --pc-accent-text: color-mix(in srgb, var(--pc-accent) 55%, var(--primary-text-color)); }
   :host([dark]) { --pc-accent: ${ACCENTS[1]}; }
